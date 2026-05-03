@@ -1,2 +1,12 @@
-// Custom hook for current user — will be implemented in the auth step
-export {};
+"use client";
+
+import { useSession } from "next-auth/react";
+
+export function useUser() {
+  const { data: session, status } = useSession();
+  return {
+    user: session?.user ?? null,
+    isLoading: status === "loading",
+    isAuthenticated: status === "authenticated",
+  };
+}

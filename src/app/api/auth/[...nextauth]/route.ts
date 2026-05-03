@@ -1,2 +1,2 @@
-// Auth.js handler — será implementado no próximo passo (autenticação)
-export {};
+import { handlers } from "@/auth";
+export const { GET, POST } = handlers;
