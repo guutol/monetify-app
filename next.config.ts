@@ -2,14 +2,15 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    dangerouslyAllowSVG: false,
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "lh3.googleusercontent.com", // Google profile pictures
+        hostname: "lh3.googleusercontent.com",
       },
       {
         protocol: "https",
-        hostname: "*.amazonaws.com", // AWS S3
+        hostname: "*.amazonaws.com",
       },
     ],
   },
