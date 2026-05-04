@@ -13,6 +13,13 @@ function resolveMockFlag(): boolean {
     console.log(`[generate] USE_MOCK_IMAGE raw="${raw}" parsed=${parsed}`);
   }
 
+  if (!isDev && parsed) {
+    console.error(
+      "[generate] USE_MOCK_IMAGE=true foi detectado em produção — mock IGNORADO. " +
+      "Remova essa variável do ambiente de produção."
+    );
+  }
+
   // Never allow mock in production regardless of env value
   return isDev && parsed;
 }

@@ -249,8 +249,14 @@ export function PayClient({
           <p className="text-4xl">❌</p>
           <h2 className="mt-4 text-lg font-semibold text-zinc-900">Falha na geração</h2>
           <p className="mt-2 text-sm text-zinc-500">
-            Houve um problema ao gerar sua imagem. Entre em contato com o suporte.
+            Houve um problema ao gerar sua imagem.
           </p>
+          {generateError && (
+            <p className="mt-2 text-xs text-red-500">{generateError}</p>
+          )}
+          <Button onClick={handleGenerate} className="mt-6 w-full">
+            Tentar novamente
+          </Button>
         </div>
       </div>
     );
