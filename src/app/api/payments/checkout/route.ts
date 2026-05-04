@@ -61,12 +61,15 @@ export async function POST(req: NextRequest) {
       devMode: pixData.devMode,
     });
   } catch (err) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[checkout] AbacatePay error:", err);
+    }
+
     await prisma.order.update({
       where: { id: order.id },
       data: { paymentStatus: "FAILED" },
     });
 
-    const message = err instanceof Error ? err.message : "Erro ao criar cobrança PIX";
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: "Erro ao criar cobrança. Tente novamente." }, { status: 502 });
   }
 }

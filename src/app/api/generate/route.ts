@@ -54,10 +54,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt não encontrado no pedido" }, { status: 400 });
   }
 
-  await prisma.order.update({
-    where: { id: orderId },
+  // Atomic check-and-set: only one concurrent request will succeed
+  const claimed = await prisma.order.updateMany({
+    where: { id: orderId, generationStatus: { in: ["PENDING", "FAILED"] } },
     data: { generationStatus: "PROCESSING" },
   });
+
+  if (claimed.count === 0) {
+    return NextResponse.json({ error: "Geração já em andamento ou concluída" }, { status: 409 });
+  }
 
   try {
     const { presignedUrl, imageId } = await generateProductImage(
