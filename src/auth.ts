@@ -13,6 +13,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.plan = (user as { plan?: string }).plan ?? "FREE";
         token.credits = (user as { credits?: number }).credits ?? 3;
+        token.role = (user as { role?: string }).role ?? "USER";
       }
       return token;
     },
@@ -20,6 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = token.id as string;
       session.user.plan = (token.plan as string) ?? "FREE";
       session.user.credits = (token.credits as number) ?? 3;
+      session.user.role = (token.role as string) ?? "USER";
       return session;
     },
   },

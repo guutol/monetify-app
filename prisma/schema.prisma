@@ -7,21 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth models ──────────────────────────────────────────────────────────────
+
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  role          UserRole  @default(USER)
   plan          Plan      @default(FREE)
   credits       Int       @default(3)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  images        GeneratedImage[]
-  subscription  Subscription?
+  accounts     Account[]
+  sessions     Session[]
+  images       GeneratedImage[]
+  subscription Subscription?
+  orders       Order[]
 }
 
 model Account {
@@ -60,6 +64,8 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// ─── Product models ────────────────────────────────────────────────────────────
+
 model GeneratedImage {
   id        String   @id @default(cuid())
   userId    String
@@ -68,21 +74,87 @@ model GeneratedImage {
   s3Key     String?
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order?
 }
 
 model Subscription {
-  id                   String             @id @default(cuid())
-  userId               String             @unique
-  plan                 Plan
-  status               SubscriptionStatus @default(ACTIVE)
-  externalId           String?
-  currentPeriodStart   DateTime
-  currentPeriodEnd     DateTime
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  plan               Plan
+  status             SubscriptionStatus @default(ACTIVE)
+  externalId         String?
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Payment & refund models ───────────────────────────────────────────────────
+
+model Order {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // AbacatePay
+  externalId       String?          @unique
+  amount           Int
+  paymentMethod    PaymentMethod
+  paymentStatus    PaymentStatus    @default(PENDING)
+
+  // Geração
+  imageId          String?          @unique
+  image            GeneratedImage?  @relation(fields: [imageId], references: [id])
+  generationStatus GenerationStatus @default(PENDING)
+
+  // Reembolso (camada interna — execução financeira é manual no dashboard AbacatePay)
+  refundStatus      RefundStatus @default(NONE)
+  refundReason      String?
+  refundRequestedAt DateTime?
+  refundedAt        DateTime?
+  externalRefundId  String?
+
+  // Disputa
+  disputeStatus DisputeStatus @default(NONE)
+
+  // Admin
+  isFlagged      Boolean @default(false)
+  adminNotes     String?
+  rawWebhookData Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refundDecisions RefundDecision[]
+}
+
+model RefundDecision {
+  id       String       @id @default(cuid())
+  orderId  String
+  order    Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  adminId  String
+  decision DecisionType
+  reason   String
+  createdAt DateTime    @default(now())
+}
+
+model WebhookEvent {
+  id          String   @id
+  event       String
+  orderId     String?
+  status      String
+  error       String?
+  processedAt DateTime @default(now())
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 enum Plan {
@@ -95,4 +167,48 @@ enum SubscriptionStatus {
   ACTIVE
   CANCELED
   PAST_DUE
+}
+
+enum PaymentMethod {
+  PIX
+  CARD
+  BOLETO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  REFUNDED
+  FAILED
+}
+
+enum GenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum RefundStatus {
+  NONE
+  REQUESTED
+  ELIGIBLE
+  MANUAL_REVIEW
+  APPROVED
+  DENIED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  NONE
+  OPEN
+  WON
+  LOST
+}
+
+enum DecisionType {
+  APPROVED
+  DENIED
 }
