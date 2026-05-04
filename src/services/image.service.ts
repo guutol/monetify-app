@@ -3,14 +3,15 @@ import { buildGenerationKey, uploadToS3, getPresignedUrl } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
 
 const isDev = process.env.NODE_ENV !== "production";
-const isMock = isDev && process.env.MOCK_IMAGE_GENERATION === "true";
+// USE_MOCK_IMAGE=true skips OpenAI + S3 and returns a placeholder image.
+// Ignored in production regardless of the env value.
+const isMock = isDev && process.env.USE_MOCK_IMAGE === "true";
 
-// Fixed placeholder used in mock mode — same image every time for predictability
 const MOCK_IMAGE_URL = "https://picsum.photos/seed/monetify/1024/1024";
 
 export async function generateProductImage(prompt: string, userId: string, orderId: string) {
   if (isMock) {
-    console.log("[generate] MOCK mode — skipping OpenAI + S3");
+    console.log("[generate] USE_MOCK_IMAGE=true — skipping OpenAI + S3");
 
     const image = await prisma.generatedImage.create({
       data: { userId, prompt, imageUrl: MOCK_IMAGE_URL },
@@ -21,12 +22,12 @@ export async function generateProductImage(prompt: string, userId: string, order
       data: { imageId: image.id, generationStatus: "COMPLETED" },
     });
 
-    console.log("[generate] MOCK done, imageId:", image.id);
+    console.log("[generate] mock done, imageId:", image.id);
 
     return { presignedUrl: MOCK_IMAGE_URL, imageId: image.id };
   }
 
-  // ── Real flow ──────────────────────────────────────────────────────────────
+  // ── Real flow: OpenAI → S3 → DB ───────────────────────────────────────────
 
   if (isDev) console.log("[generate] calling OpenAI images.generate...");
 
