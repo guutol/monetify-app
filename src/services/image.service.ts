@@ -2,16 +2,26 @@ import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
 
-const isDev = process.env.NODE_ENV !== "production";
-// USE_MOCK_IMAGE=true skips OpenAI + S3 and returns a placeholder image.
-// Ignored in production regardless of the env value.
-const isMock = isDev && process.env.USE_MOCK_IMAGE === "true";
-
 const MOCK_IMAGE_URL = "https://picsum.photos/seed/monetify/1024/1024";
 
+function resolveMockFlag(): boolean {
+  const isDev = process.env.NODE_ENV !== "production";
+  const raw = process.env.USE_MOCK_IMAGE;
+  const parsed = raw === "true";
+
+  if (isDev) {
+    console.log(`[generate] USE_MOCK_IMAGE raw="${raw}" parsed=${parsed}`);
+  }
+
+  // Never allow mock in production regardless of env value
+  return isDev && parsed;
+}
+
 export async function generateProductImage(prompt: string, userId: string, orderId: string) {
+  const isMock = resolveMockFlag();
+
   if (isMock) {
-    console.log("[generate] USE_MOCK_IMAGE=true — skipping OpenAI + S3");
+    console.log("[generate] mock mode — skipping OpenAI + S3");
 
     const image = await prisma.generatedImage.create({
       data: { userId, prompt, imageUrl: MOCK_IMAGE_URL },
@@ -28,6 +38,8 @@ export async function generateProductImage(prompt: string, userId: string, order
   }
 
   // ── Real flow: OpenAI → S3 → DB ───────────────────────────────────────────
+
+  const isDev = process.env.NODE_ENV !== "production";
 
   if (isDev) console.log("[generate] calling OpenAI images.generate...");
 
@@ -67,6 +79,7 @@ export async function generateProductImage(prompt: string, userId: string, order
     await uploadToS3(base64, s3Key);
   } catch (err) {
     if (isDev) console.error("[generate] S3 upload error:", err);
+    // Clean up the orphan record — Order failure is handled by the route
     await prisma.generatedImage.delete({ where: { id: image.id } }).catch(() => null);
     throw err;
   }
@@ -86,7 +99,7 @@ export async function generateProductImage(prompt: string, userId: string, order
 
   const presignedUrl = await getPresignedUrl(s3Key);
 
-  if (isDev) console.log("[generate] done, imageId:", image.id);
+  if (isDev) console.log("[generate] done — imageId:", image.id, "s3Key:", s3Key);
 
   return { presignedUrl, imageId: image.id };
 }
