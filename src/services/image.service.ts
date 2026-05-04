@@ -7,7 +7,7 @@ export async function generateProductImage(prompt: string, userId: string) {
     prompt,
     n: 1,
     size: "1024x1024",
-    quality: "standard",
+    quality: "high",
   });
 
   const base64 = response.data?.[0]?.b64_json;
