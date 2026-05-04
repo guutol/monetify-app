@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateProductImage } from "@/services/image.service";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -35,15 +37,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Pagamento não confirmado" }, { status: 402 });
   }
 
-  if (order.generationStatus !== "PENDING") {
-    return NextResponse.json({ error: "Geração já iniciada ou concluída" }, { status: 409 });
+  if (order.generationStatus === "COMPLETED") {
+    return NextResponse.json({ error: "Imagem já gerada para este pedido" }, { status: 409 });
+  }
+
+  if (order.generationStatus === "PROCESSING") {
+    return NextResponse.json({ error: "Geração já em andamento" }, { status: 409 });
+  }
+
+  // Allow retry from FAILED; block only COMPLETED and PROCESSING
+  if (order.generationStatus !== "PENDING" && order.generationStatus !== "FAILED") {
+    return NextResponse.json({ error: "Status de geração inválido" }, { status: 409 });
   }
 
   if (!order.prompt) {
     return NextResponse.json({ error: "Prompt não encontrado no pedido" }, { status: 400 });
   }
 
-  // Mark as PROCESSING to prevent concurrent generation requests
   await prisma.order.update({
     where: { id: orderId },
     data: { generationStatus: "PROCESSING" },
@@ -58,12 +68,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ imageUrl: presignedUrl, imageId });
   } catch (err) {
+    if (isDev) console.error("[generate] generation failed:", err);
+
     await prisma.order.update({
       where: { id: orderId },
       data: { generationStatus: "FAILED" },
     });
 
-    const message = err instanceof Error ? err.message : "Erro ao gerar imagem";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Erro ao gerar imagem. Tente novamente." }, { status: 500 });
   }
 }

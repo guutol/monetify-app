@@ -56,6 +56,8 @@ export function PayClient({
   const [imageId, setImageId] = useState<string | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [simulating, setSimulating] = useState(false);
+  const [simulateError, setSimulateError] = useState<string | null>(null);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -138,6 +140,31 @@ export function PayClient({
     } catch {
       setGenerateError("Erro de conexão. Tente novamente.");
       setPhase("paid_ready");
+    }
+  }
+
+  async function handleSimulatePaid() {
+    setSimulating(true);
+    setSimulateError(null);
+
+    try {
+      const res = await fetch(`/api/dev/orders/${orderId}/mark-paid`, {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSimulateError(data.error ?? "Erro ao simular pagamento");
+        return;
+      }
+
+      stopPolling();
+      setPhase("paid_ready");
+    } catch {
+      setSimulateError("Erro de conexão.");
+    } finally {
+      setSimulating(false);
     }
   }
 
@@ -324,6 +351,25 @@ export function PayClient({
             minute: "2-digit",
           })}
         </p>
+      )}
+
+      {isDevEnvironment && (
+        <div className="mt-6 border-t border-dashed border-amber-200 pt-5">
+          {simulateError && (
+            <p className="mb-2 text-xs text-red-600">{simulateError}</p>
+          )}
+          <Button
+            onClick={handleSimulatePaid}
+            disabled={simulating}
+            variant="outline"
+            className="w-full border-amber-300 text-amber-700 hover:bg-amber-50 text-sm"
+          >
+            {simulating ? "Simulando..." : "Simular pagamento aprovado"}
+          </Button>
+          <p className="mt-1 text-center text-xs text-amber-500">
+            Apenas em desenvolvimento — não aparece em produção
+          </p>
+        </div>
       )}
     </div>
   );

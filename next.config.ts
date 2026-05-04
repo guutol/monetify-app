@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.amazonaws.com",
       },
+      {
+        // Mock image generation in development
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
     ],
   },
 };
