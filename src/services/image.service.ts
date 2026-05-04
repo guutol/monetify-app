@@ -1,4 +1,5 @@
 import { openai } from "@/lib/openai";
+import { uploadImageToS3 } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
 
 export async function generateProductImage(prompt: string, userId: string) {
@@ -13,20 +14,21 @@ export async function generateProductImage(prompt: string, userId: string) {
   const base64 = response.data?.[0]?.b64_json;
   if (!base64) throw new Error("OpenAI não retornou imagem");
 
-  // Decrementa crédito do usuário
+  const { url, key } = await uploadImageToS3(base64, userId);
+
   await prisma.user.update({
     where: { id: userId },
     data: { credits: { decrement: 1 } },
   });
 
-  // Salva registro no histórico (imageUrl será atualizado com S3 na próxima etapa)
   const image = await prisma.generatedImage.create({
     data: {
       userId,
       prompt,
-      imageUrl: "", // substituído pelo URL do S3 na próxima etapa
+      imageUrl: url,
+      s3Key: key,
     },
   });
 
-  return { base64, imageId: image.id };
+  return { imageUrl: url, imageId: image.id };
 }

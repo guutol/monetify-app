@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
+import Image from "next/image";
 
 export default function GeneratePage() {
   const { data: session, update } = useSession();
   const [prompt, setPrompt] = useState("");
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +19,7 @@ export default function GeneratePage() {
 
     setIsLoading(true);
     setError(null);
-    setImageBase64(null);
+    setImageUrl(null);
 
     try {
       const res = await fetch("/api/generate", {
@@ -34,22 +35,13 @@ export default function GeneratePage() {
         return;
       }
 
-      setImageBase64(data.base64);
-      // Atualiza créditos na sessão
+      setImageUrl(data.imageUrl);
       await update({ credits: credits - 1 });
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function handleDownload() {
-    if (!imageBase64) return;
-    const link = document.createElement("a");
-    link.href = `data:image/png;base64,${imageBase64}`;
-    link.download = `monetify-${Date.now()}.png`;
-    link.click();
   }
 
   return (
@@ -100,19 +92,28 @@ export default function GeneratePage() {
         </div>
       )}
 
-      {imageBase64 && !isLoading && (
+      {imageUrl && !isLoading && (
         <div className="mt-8 space-y-4">
           <div className="overflow-hidden rounded-xl border border-zinc-200">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`data:image/png;base64,${imageBase64}`}
+            <Image
+              src={imageUrl}
               alt={prompt}
+              width={1024}
+              height={1024}
               className="w-full"
+              unoptimized
             />
           </div>
-          <Button variant="outline" onClick={handleDownload} className="w-full">
-            Baixar Imagem
-          </Button>
+          <a
+            href={imageUrl}
+            download={`monetify-${Date.now()}.png`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" className="w-full">
+              Baixar Imagem
+            </Button>
+          </a>
         </div>
       )}
     </div>

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Créditos insuficientes" }, { status: 402 });
   }
 
-  const { base64, imageId } = await generateProductImage(prompt.trim(), session.user.id);
+  const { imageUrl, imageId } = await generateProductImage(prompt.trim(), session.user.id);
 
-  return NextResponse.json({ base64, imageId });
+  return NextResponse.json({ imageUrl, imageId });
 }
