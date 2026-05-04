@@ -9,6 +9,7 @@ export default function GeneratePage() {
   const { data: session, update } = useSession();
   const [prompt, setPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [downloadName, setDownloadName] = useState("monetify.png");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +37,7 @@ export default function GeneratePage() {
       }
 
       setImageUrl(data.imageUrl);
+      setDownloadName(`monetify-${data.imageId}.png`);
       await update({ credits: credits - 1 });
     } catch {
       setError("Erro de conexão. Tente novamente.");
@@ -106,7 +108,7 @@ export default function GeneratePage() {
           </div>
           <a
             href={imageUrl}
-            download={`monetify-${Date.now()}.png`}
+            download={downloadName}
             target="_blank"
             rel="noopener noreferrer"
           >
