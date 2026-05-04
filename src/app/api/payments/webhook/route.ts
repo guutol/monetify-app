@@ -11,9 +11,28 @@ interface AbacatePayWebhookPayload {
   data: {
     checkout?: { id: string; [key: string]: unknown };
     transparent?: { id: string; [key: string]: unknown };
+    refund?: { id?: string; [key: string]: unknown };
     reason?: string;
+    id?: string;
     [key: string]: unknown;
   };
+}
+
+// Eventos que requerem uma Order para serem processados
+const ORDER_REQUIRED_EVENTS = new Set([
+  "checkout.completed",
+  "checkout.refunded",
+  "checkout.disputed",
+  "transparent.completed",
+  "transparent.refunded",
+  "transparent.disputed",
+]);
+
+function resolveExternalId(event: string, data: AbacatePayWebhookPayload["data"]): string | null {
+  if (event.startsWith("checkout.")) return data.checkout?.id ?? null;
+  if (event.startsWith("transparent.")) return data.transparent?.id ?? null;
+  // Fallback para eventos desconhecidos
+  return data.id ?? null;
 }
 
 export async function POST(req: NextRequest) {
@@ -79,7 +98,8 @@ export async function POST(req: NextRequest) {
 
   // ── Processar evento ──────────────────────────────────────────────────────
   try {
-    const externalId = data.checkout?.id ?? data.transparent?.id ?? null;
+    // Extrai externalId de acordo com o prefixo do evento
+    const externalId = resolveExternalId(event, data);
     let orderId: string | null = null;
 
     if (externalId) {
@@ -90,51 +110,65 @@ export async function POST(req: NextRequest) {
       orderId = order?.id ?? null;
     }
 
+    // Eventos que necessitam de uma Order: falhar com erro claro se não encontrada
+    if (ORDER_REQUIRED_EVENTS.has(event) && !orderId) {
+      const errorMsg = `Order not found for externalId: ${externalId ?? "(none)"}`;
+
+      await prisma.webhookEvent.update({
+        where: { id: webhookId },
+        data: { status: "FAILED", error: errorMsg },
+      });
+
+      // Dev: retorna erro visível para debugging
+      // Prod: retorna 200 para evitar retentativas infinitas da AbacatePay
+      //       (a Order não vai aparecer por retentativa)
+      if (isProd) {
+        return NextResponse.json({ received: true, warning: "order_not_found" });
+      }
+      return NextResponse.json({ error: errorMsg }, { status: 422 });
+    }
+
     switch (event) {
       case "checkout.completed":
       case "transparent.completed": {
-        if (orderId) {
-          await prisma.order.update({
-            where: { id: orderId },
-            data: {
-              paymentStatus: "PAID",
-              rawWebhookData: payload as object,
-            },
-          });
-        }
+        await prisma.order.update({
+          where: { id: orderId! },
+          data: {
+            paymentStatus: "PAID",
+            rawWebhookData: payload as object,
+          },
+        });
         break;
       }
 
       case "checkout.refunded":
       case "transparent.refunded": {
-        if (orderId) {
-          // TODO: Verificar se o payload de reembolso inclui um ID de reembolso
-          //       separado (ex: data.refundId). Não documentado pela AbacatePay.
-          await prisma.order.update({
-            where: { id: orderId },
-            data: {
-              paymentStatus: "REFUNDED",
-              refundStatus: "REFUNDED",
-              refundedAt: new Date(),
-              rawWebhookData: payload as object,
-            },
-          });
-        }
+        // data.refund.id é o ID do reembolso no AbacatePay, quando presente
+        const externalRefundId = data.refund?.id ?? null;
+
+        await prisma.order.update({
+          where: { id: orderId! },
+          data: {
+            paymentStatus: "REFUNDED",
+            refundStatus: "REFUNDED",
+            refundedAt: new Date(),
+            ...(externalRefundId ? { externalRefundId } : {}),
+            rawWebhookData: payload as object,
+          },
+        });
         break;
       }
 
       case "checkout.disputed":
       case "transparent.disputed": {
-        if (orderId) {
-          await prisma.order.update({
-            where: { id: orderId },
-            data: {
-              disputeStatus: "OPEN",
-              isFlagged: true,
-              rawWebhookData: payload as object,
-            },
-          });
-        }
+        await prisma.order.update({
+          where: { id: orderId! },
+          data: {
+            disputeStatus: "OPEN",
+            isFlagged: true,
+            rawWebhookData: payload as object,
+          },
+        });
         break;
       }
 
