@@ -12,6 +12,8 @@ interface Props {
   pixExpiresAt: string | null;
   initialPaymentStatus: string;
   initialGenerationStatus: string;
+  initialImageUrl: string | null;
+  initialImageId: string | null;
   isDevEnvironment: boolean;
 }
 
@@ -38,6 +40,8 @@ export function PayClient({
   pixExpiresAt,
   initialPaymentStatus,
   initialGenerationStatus,
+  initialImageUrl,
+  initialImageId,
   isDevEnvironment,
 }: Props) {
   const [phase, setPhase] = useState<Phase>(() => {
@@ -52,8 +56,8 @@ export function PayClient({
     return "waiting_payment";
   });
 
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [imageId, setImageId] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl);
+  const [imageId, setImageId] = useState<string | null>(initialImageId);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [simulating, setSimulating] = useState(false);
@@ -197,13 +201,13 @@ export function PayClient({
 
   if (phase === "done") {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+      <div className="mx-auto max-w-2xl space-y-6">
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
           Pagamento confirmado e imagem gerada com sucesso!
         </div>
 
-        {imageUrl && (
-          <div className="space-y-4">
+        {imageUrl ? (
+          <div className="space-y-3">
             <div className="overflow-hidden rounded-xl border border-zinc-200">
               <Image
                 src={imageUrl}
@@ -216,28 +220,35 @@ export function PayClient({
             </div>
             <a
               href={imageUrl}
-              download={`monetify-${imageId}.png`}
+              download={`monetify-${imageId ?? orderId}.png`}
               target="_blank"
               rel="noopener noreferrer"
             >
               <Button variant="outline" className="w-full">
-                Baixar Imagem
+                Baixar imagem
               </Button>
             </a>
           </div>
-        )}
-
-        {!imageUrl && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center">
-            <p className="text-sm text-zinc-500">
-              Imagem gerada. Acesse seu{" "}
-              <a href="/history" className="underline">
-                histórico
-              </a>{" "}
-              para baixá-la.
-            </p>
+        ) : (
+          <div className="rounded-xl border border-zinc-200 bg-white p-8 text-center text-sm text-zinc-500">
+            Imagem gerada. Acesse seu{" "}
+            <a href="/history" className="underline">
+              histórico
+            </a>{" "}
+            para baixá-la.
           </div>
         )}
+
+        <div className="flex gap-3">
+          <a href="/history" className="flex-1">
+            <Button variant="outline" className="w-full">
+              Ver histórico
+            </Button>
+          </a>
+          <a href="/generate" className="flex-1">
+            <Button className="w-full">Gerar outra imagem</Button>
+          </a>
+        </div>
       </div>
     );
   }
