@@ -110,6 +110,14 @@ model Order {
   image            GeneratedImage?  @relation(fields: [imageId], references: [id])
   generationStatus GenerationStatus @default(PENDING)
 
+  // Dados do prompt (salvo no checkout, usado pela geração após pagamento)
+  prompt           String?
+
+  // PIX — dados da cobrança transparente
+  pixBrCode        String?
+  pixBrCodeBase64  String?
+  pixExpiresAt     DateTime?
+
   // Reembolso (camada interna — execução financeira é manual no dashboard AbacatePay)
   refundStatus      RefundStatus @default(NONE)
   refundReason      String?

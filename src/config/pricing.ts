@@ -1,0 +1,1 @@
+export const PRICE_PER_GENERATION_CENTS = 990; // R$ 9,90

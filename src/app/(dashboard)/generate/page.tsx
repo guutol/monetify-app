@@ -1,44 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import Image from "next/image";
 
 export default function GeneratePage() {
-  const { data: session, update } = useSession();
+  const router = useRouter();
   const [prompt, setPrompt] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [downloadName, setDownloadName] = useState("monetify.png");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const credits = session?.user?.credits ?? 0;
-
-  async function handleGenerate() {
+  async function handleCheckout() {
     if (!prompt.trim() || isLoading) return;
 
     setIsLoading(true);
     setError(null);
-    setImageUrl(null);
 
     try {
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt: prompt.trim() }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? "Erro ao gerar imagem");
+        setError(data.error ?? "Erro ao criar cobrança");
         return;
       }
 
-      setImageUrl(data.imageUrl);
-      setDownloadName(`monetify-${data.imageId}.png`);
-      await update({ credits: credits - 1 });
+      router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
@@ -51,8 +43,7 @@ export default function GeneratePage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-zinc-900">Gerar Imagem</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Créditos disponíveis:{" "}
-          <span className="font-semibold text-zinc-800">{credits}</span>
+          R$ 9,90 por imagem gerada — pagamento via PIX
         </p>
       </div>
 
@@ -78,46 +69,14 @@ export default function GeneratePage() {
         )}
 
         <Button
-          onClick={handleGenerate}
-          disabled={isLoading || credits <= 0 || prompt.trim().length < 5}
+          onClick={handleCheckout}
+          disabled={isLoading || prompt.trim().length < 5}
           size="lg"
           className="w-full"
         >
-          {isLoading ? "Gerando..." : credits <= 0 ? "Sem créditos" : "Gerar Imagem"}
+          {isLoading ? "Criando cobrança..." : "Pagar R$ 9,90 e Gerar"}
         </Button>
       </div>
-
-      {isLoading && (
-        <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 py-16">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900" />
-          <p className="mt-4 text-sm text-zinc-500">Gerando sua imagem...</p>
-        </div>
-      )}
-
-      {imageUrl && !isLoading && (
-        <div className="mt-8 space-y-4">
-          <div className="overflow-hidden rounded-xl border border-zinc-200">
-            <Image
-              src={imageUrl}
-              alt={prompt}
-              width={1024}
-              height={1024}
-              className="w-full"
-              unoptimized
-            />
-          </div>
-          <a
-            href={imageUrl}
-            download={downloadName}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" className="w-full">
-              Baixar Imagem
-            </Button>
-          </a>
-        </div>
-      )}
     </div>
   );
 }
