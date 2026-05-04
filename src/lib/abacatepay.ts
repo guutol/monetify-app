@@ -2,13 +2,16 @@ import crypto from "node:crypto";
 import { NextRequest } from "next/server";
 
 /**
- * Validates the URL secret passed as a query param on the webhook endpoint.
+ * Valida o secret enviado na query string do webhook.
  *
- * Set up: when creating the webhook in the AbacatePay dashboard, you can add
- * a secret to the URL (e.g. ?secret=VALUE). Store that value in
- * ABACATEPAY_WEBHOOK_URL_SECRET.
+ * A AbacatePay suporta dois mecanismos de segurança simultâneos:
+ *   1. Secret na URL  → validado aqui
+ *   2. HMAC-SHA256    → validado em verifyAbacatePaySignature
  *
- * Dashboard path: AbacatePay → Webhooks → [seu webhook] → secret da URL
+ * Em produção, ambos são obrigatórios. Em desenvolvimento, são opcionais
+ * (ignorados se as variáveis de ambiente não estiverem configuradas).
+ *
+ * Como obter: Dashboard AbacatePay → Webhooks → [seu webhook] → URL secret
  */
 export function verifyWebhookUrlSecret(req: NextRequest): boolean {
   const expected = process.env.ABACATEPAY_WEBHOOK_URL_SECRET;
@@ -18,16 +21,17 @@ export function verifyWebhookUrlSecret(req: NextRequest): boolean {
 }
 
 /**
- * Validates the X-Webhook-Signature header using HMAC-SHA256 + Base64.
- * Uses timing-safe comparison to prevent timing attacks.
+ * Valida o header X-Webhook-Signature usando HMAC-SHA256 + Base64.
+ * Usa timingSafeEqual para evitar timing attacks.
  *
- * TODO: Confirm in the AbacatePay dashboard whether ABACATEPAY_WEBHOOK_SIGNATURE_KEY
- * is a per-account key or the global key shown in their public documentation.
- * Their docs show a fixed constant (ABACATEPAY_PUBLIC_KEY), but this may be
- * account-specific. Until confirmed, this validation is opt-in (runs only when
- * ABACATEPAY_WEBHOOK_SIGNATURE_KEY is set in the environment).
+ * Em produção: obrigatório — AbacatePay recomenda URL secret + HMAC juntos.
+ * Em desenvolvimento: opcional (ignorado se ABACATEPAY_WEBHOOK_SIGNATURE_KEY
+ * não estiver configurado).
  *
- * Reference: https://docs.abacatepay.com/pages/webhooks
+ * TODO: Confirmar no dashboard AbacatePay se ABACATEPAY_WEBHOOK_SIGNATURE_KEY
+ * é uma chave por-conta ou a chave global exibida na documentação deles
+ * (chamada de ABACATEPAY_PUBLIC_KEY). Cole o valor correto no .env.local.
+ * Referência: https://docs.abacatepay.com/pages/webhooks
  */
 export function verifyAbacatePaySignature(rawBody: string, signature: string): boolean {
   const key = process.env.ABACATEPAY_WEBHOOK_SIGNATURE_KEY;

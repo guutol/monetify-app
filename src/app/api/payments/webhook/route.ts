@@ -19,34 +19,37 @@ interface AbacatePayWebhookPayload {
 export async function POST(req: NextRequest) {
   const isProd = process.env.NODE_ENV === "production";
 
-  // ── Ler body raw (obrigatório antes de qualquer parse para HMAC funcionar) ──
+  // ── Body raw: deve ser lido antes de qualquer parse para HMAC funcionar ──
   const rawBody = await req.text();
 
   // ── Validação 1: secret na URL ────────────────────────────────────────────
-  const urlSecretConfigured = !!process.env.ABACATEPAY_WEBHOOK_URL_SECRET;
-
-  if (urlSecretConfigured) {
+  // Produção: obrigatório. Desenvolvimento: ignorado se não configurado.
+  if (process.env.ABACATEPAY_WEBHOOK_URL_SECRET) {
     if (!verifyWebhookUrlSecret(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   } else if (isProd) {
-    // Em produção sem secret configurado: recusa para não ficar aberto
     console.error("[webhook] ABACATEPAY_WEBHOOK_URL_SECRET não configurado em produção");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
-  // Em desenvolvimento sem secret: permite para facilitar testes locais
 
-  // ── Validação 2: assinatura HMAC-SHA256 ───────────────────────────────────
+  // ── Validação 2: assinatura HMAC-SHA256 (X-Webhook-Signature) ────────────
+  // Produção: obrigatório — AbacatePay recomenda os dois mecanismos juntos.
+  // Desenvolvimento: ignorado se ABACATEPAY_WEBHOOK_SIGNATURE_KEY não estiver
+  // configurado, para facilitar testes locais sem precisar assinar payloads.
+  //
   // TODO: Confirmar no dashboard AbacatePay qual valor usar em
-  //       ABACATEPAY_WEBHOOK_SIGNATURE_KEY (chave por-conta ou chave global da doc).
-  //       Quando confirmado, tornar obrigatória em produção.
-  const signatureKeyConfigured = !!process.env.ABACATEPAY_WEBHOOK_SIGNATURE_KEY;
-
-  if (signatureKeyConfigured) {
+  //       ABACATEPAY_WEBHOOK_SIGNATURE_KEY (chave por-conta ou a chave global
+  //       exibida na documentação deles como ABACATEPAY_PUBLIC_KEY).
+  //       Referência: https://docs.abacatepay.com/pages/webhooks
+  if (process.env.ABACATEPAY_WEBHOOK_SIGNATURE_KEY) {
     const signature = req.headers.get("x-webhook-signature") ?? "";
     if (!verifyAbacatePaySignature(rawBody, signature)) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
+  } else if (isProd) {
+    console.error("[webhook] ABACATEPAY_WEBHOOK_SIGNATURE_KEY não configurado em produção");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
 
   // ── Parse do payload ──────────────────────────────────────────────────────
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
-  // Registra o evento antes de processar (garante idempotência mesmo em crash)
+  // Registra antes de processar para garantir idempotência mesmo em crash
   await prisma.webhookEvent.create({
     data: { id: webhookId, event, status: "PROCESSING" },
   });
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
       case "transparent.refunded": {
         if (orderId) {
           // TODO: Verificar se o payload de reembolso inclui um ID de reembolso
-          //       (ex: data.refundId). Não documentado claramente pela AbacatePay.
+          //       separado (ex: data.refundId). Não documentado pela AbacatePay.
           await prisma.order.update({
             where: { id: orderId },
             data: {
@@ -136,7 +139,7 @@ export async function POST(req: NextRequest) {
       }
 
       default: {
-        // Evento desconhecido: registrar e retornar 200 (não quebrar)
+        // Evento desconhecido: registrar e retornar 200 para não causar retentativas
         break;
       }
     }
@@ -155,7 +158,7 @@ export async function POST(req: NextRequest) {
       data: { status: "FAILED", error: errorMessage },
     });
 
-    // Retornar 500 para AbacatePay retentar
+    // 500 faz AbacatePay retentar a entrega
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
