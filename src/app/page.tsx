@@ -4,13 +4,13 @@ import Link from "next/link";
 
 function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <span className="text-xl font-bold tracking-tight text-zinc-900">Monetify</span>
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 transition-colors"
+            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900"
           >
             Entrar
           </Link>
@@ -30,7 +30,7 @@ function Navbar() {
 
 function HeroMockup() {
   return (
-    <div className="relative mx-auto w-full max-w-sm">
+    <div className="relative mx-auto w-full max-w-[340px] sm:max-w-sm">
       {/* Main card */}
       <div className="relative rounded-2xl border border-zinc-700/60 bg-zinc-900/80 p-5 shadow-2xl backdrop-blur-sm">
         {/* Card header */}
@@ -169,7 +169,7 @@ function Hero() {
           </div>
 
           {/* Right — product mockup */}
-          <div className="flex justify-center pb-8 lg:justify-end lg:pb-0">
+          <div className="flex justify-center pb-8 pt-4 lg:justify-end lg:pb-0 lg:pt-0">
             <HeroMockup />
           </div>
         </div>
