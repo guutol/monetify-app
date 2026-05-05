@@ -86,17 +86,18 @@ function HeroMockup() {
           <span className="text-sm font-bold text-white">R$ 9,90</span>
         </div>
 
-        {/* Platform badges — dentro do card, abaixo do preço */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {["Shopee", "Mercado Livre", "TikTok Shop", "Instagram"].map((p) => (
-            <span
-              key={p}
-              className="rounded-full border border-zinc-800 px-2.5 py-0.5 text-[10px] font-medium text-zinc-500"
-            >
-              {p}
-            </span>
-          ))}
-        </div>
+      </div>
+
+      {/* Floating platform badges */}
+      <div className="absolute -bottom-4 -left-2 flex gap-1.5">
+        {["Shopee", "Mercado Livre", "TikTok Shop", "Instagram"].map((p) => (
+          <span
+            key={p}
+            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400 shadow-lg"
+          >
+            {p}
+          </span>
+        ))}
       </div>
 
       {/* Floating AI badge */}
