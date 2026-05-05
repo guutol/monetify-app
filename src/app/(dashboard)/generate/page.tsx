@@ -229,9 +229,9 @@ export default function GeneratePage() {
                 )}
               </button>
 
-              {!canSubmit && !isLoading && prompt.length > 0 && (
+              {!canSubmit && !isLoading && (
                 <p className="mt-2 text-center text-xs text-zinc-500">
-                  Adicione pelo menos 5 caracteres na descrição
+                  Descreva seu produto para liberar o pagamento.
                 </p>
               )}
             </div>
