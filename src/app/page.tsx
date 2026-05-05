@@ -16,7 +16,7 @@ function Navbar() {
           </Link>
           <Link
             href="/generate"
-            className="hidden sm:inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+            className="hidden sm:inline-flex items-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
           >
             Começar agora
           </Link>
@@ -32,8 +32,13 @@ function Hero() {
   const platforms = ["Shopee", "Mercado Livre", "TikTok Shop", "Instagram", "Lojas online"];
 
   return (
-    <section className="bg-zinc-950 px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
-      <div className="mx-auto max-w-4xl text-center">
+    <section className="relative overflow-hidden bg-zinc-950 px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
+      {/* Emerald radial glow — purely decorative */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="h-[500px] w-[700px] rounded-full bg-emerald-500/10 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl text-center">
         <div className="mb-6 flex flex-wrap justify-center gap-2">
           {platforms.map((p) => (
             <span
@@ -59,7 +64,7 @@ function Hero() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/generate"
-            className="inline-flex items-center rounded-lg bg-emerald-500 px-8 py-3.5 text-base font-semibold text-white hover:bg-emerald-400 transition-colors"
+            className="inline-flex items-center rounded-xl bg-emerald-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/40 transition-all"
           >
             Gerar minha imagem →
           </Link>
@@ -173,7 +178,7 @@ function Benefits() {
           {BENEFITS.map((b) => (
             <div
               key={b.title}
-              className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm"
+              className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
             >
               <span className="text-3xl">{b.icon}</span>
               <h3 className="mt-4 text-base font-semibold text-zinc-900">{b.title}</h3>
@@ -204,7 +209,7 @@ function Pricing() {
         </h2>
         <p className="mt-3 text-zinc-500">Sem planos confusos. Pague só pelo que usar.</p>
 
-        <div className="mt-10 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="mt-10 rounded-2xl border border-emerald-200 bg-white p-8 shadow-md shadow-emerald-500/10">
           <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
             Sem assinatura obrigatória
           </span>
@@ -229,7 +234,7 @@ function Pricing() {
 
           <Link
             href="/generate"
-            className="mt-8 flex items-center justify-center rounded-lg bg-zinc-900 px-6 py-3.5 text-base font-semibold text-white hover:bg-zinc-700 transition-colors"
+            className="mt-8 flex items-center justify-center rounded-xl bg-zinc-900 px-6 py-3.5 text-base font-semibold text-white hover:bg-zinc-700 transition-colors"
           >
             Gerar minha primeira imagem
           </Link>
@@ -253,7 +258,7 @@ function FinalCTA() {
         </p>
         <Link
           href="/generate"
-          className="mt-8 inline-flex items-center rounded-lg bg-emerald-500 px-8 py-3.5 text-base font-semibold text-white hover:bg-emerald-400 transition-colors"
+          className="mt-8 inline-flex items-center rounded-xl bg-emerald-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/40 transition-all"
         >
           Gerar minha imagem →
         </Link>
