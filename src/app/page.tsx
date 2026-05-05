@@ -4,7 +4,7 @@ import Link from "next/link";
 
 function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <span className="text-xl font-bold tracking-tight text-zinc-900">Monetify</span>
         <div className="flex items-center gap-3">
@@ -30,7 +30,7 @@ function Navbar() {
 
 function HeroMockup() {
   return (
-    <div className="relative mx-auto w-full max-w-[340px] sm:max-w-sm">
+    <div className="relative mx-auto w-full max-w-sm">
       {/* Main card */}
       <div className="relative rounded-2xl border border-zinc-700/60 bg-zinc-900/80 p-5 shadow-2xl backdrop-blur-sm">
         {/* Card header */}
@@ -169,7 +169,7 @@ function Hero() {
           </div>
 
           {/* Right — product mockup */}
-          <div className="flex justify-center pb-8 pt-4 lg:justify-end lg:pb-0 lg:pt-0">
+          <div className="flex justify-center pb-8 lg:justify-end lg:pb-0">
             <HeroMockup />
           </div>
         </div>
