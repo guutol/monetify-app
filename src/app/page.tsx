@@ -87,12 +87,12 @@ function HeroMockup() {
         </div>
       </div>
 
-      {/* Floating platform badges */}
-      <div className="absolute -bottom-4 -left-2 flex gap-1.5">
-        {["Shopee", "Mercado Livre"].map((p) => (
+      {/* Platform badges — fluxo normal para permitir wrap sem sair da tela */}
+      <div className="mt-3 flex flex-wrap gap-1.5 px-1">
+        {["Shopee", "Mercado Livre", "TikTok Shop", "Instagram", "Amazon"].map((p) => (
           <span
             key={p}
-            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400 shadow-lg"
+            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400"
           >
             {p}
           </span>
