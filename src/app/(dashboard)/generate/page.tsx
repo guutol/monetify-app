@@ -121,6 +121,7 @@ export default function GeneratePage() {
               id="prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
+              autoComplete="off"
               placeholder="Ex: Tênis esportivo branco, fundo branco limpo, estúdio profissional"
               rows={7}
               maxLength={1000}
