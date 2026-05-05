@@ -1,25 +1,62 @@
 import { signIn } from "@/auth";
-import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 p-8">
-      <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Monetify</h1>
-          <p className="mt-2 text-sm text-zinc-500">
-            Entre para gerar imagens profissionais com IA
+    <main className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-6">
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 h-[500px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
+      </div>
+
+      {/* Back link */}
+      <a
+        href="/"
+        className="absolute left-6 top-6 inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-zinc-300"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        Voltar para início
+      </a>
+
+      {/* Login card */}
+      <div className="relative w-full max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-2xl">
+        {/* Brand */}
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
+            <span className="text-lg font-bold text-emerald-400">M</span>
+          </div>
+          <p className="text-sm font-semibold tracking-wide text-emerald-400">Monetify</p>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-white">
+            Entre para continuar
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+            Faça login para gerar sua imagem e acompanhar seus pedidos.
           </p>
         </div>
 
+        {/* Google sign-in */}
         <form
           action={async () => {
             "use server";
             await signIn("google", { redirectTo: "/dashboard" });
           }}
         >
-          <Button type="submit" className="w-full" size="lg">
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-semibold text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 hover:shadow-md"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -37,9 +74,14 @@ export default function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            Entrar com Google
-          </Button>
+            Continuar com Google
+          </button>
         </form>
+
+        {/* Auxiliary text */}
+        <p className="mt-6 text-center text-xs text-zinc-500">
+          Você só precisa entrar na hora de gerar ou comprar.
+        </p>
       </div>
     </main>
   );
