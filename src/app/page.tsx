@@ -26,49 +26,152 @@ function Navbar() {
   );
 }
 
+// ─── HeroMockup ───────────────────────────────────────────────────────────────
+
+function HeroMockup() {
+  return (
+    <div className="relative mx-auto w-full max-w-sm">
+      {/* Main card */}
+      <div className="relative rounded-2xl border border-zinc-700/60 bg-zinc-900/80 p-5 shadow-2xl backdrop-blur-sm">
+        {/* Card header */}
+        <div className="mb-5 flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Monetify
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Pronto
+          </span>
+        </div>
+
+        {/* Before / After */}
+        <div className="relative grid grid-cols-2 gap-3">
+          <div>
+            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800">
+              <span className="text-4xl opacity-50">📦</span>
+              <div className="absolute bottom-2 left-2 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-zinc-400">
+                Antes
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-50 to-white shadow-inner">
+              <span className="text-4xl">📦</span>
+              <div className="absolute bottom-2 left-2 rounded bg-black/10 px-1.5 py-0.5 text-[10px] text-zinc-500">
+                Depois
+              </div>
+            </div>
+          </div>
+
+          {/* Arrow between columns */}
+          <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs font-bold text-emerald-400 shadow-lg">
+            →
+          </div>
+        </div>
+
+        {/* Status bar */}
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5">
+          <span className="text-sm text-emerald-400">✓</span>
+          <span className="text-xs font-medium text-emerald-300">Pronta para marketplace</span>
+        </div>
+
+        {/* Price row */}
+        <div className="mt-3 flex items-center justify-between border-t border-zinc-800 pt-3">
+          <span className="text-xs text-zinc-500">Custo por imagem</span>
+          <span className="text-sm font-bold text-white">R$ 9,90</span>
+        </div>
+      </div>
+
+      {/* Floating platform badges */}
+      <div className="absolute -bottom-4 -left-2 flex gap-1.5">
+        {["Shopee", "Mercado Livre"].map((p) => (
+          <span
+            key={p}
+            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400 shadow-lg"
+          >
+            {p}
+          </span>
+        ))}
+      </div>
+
+      {/* Floating AI badge */}
+      <div className="absolute -right-3 -top-3 rounded-xl bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg shadow-emerald-500/40">
+        IA
+      </div>
+    </div>
+  );
+}
+
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 function Hero() {
   const platforms = ["Shopee", "Mercado Livre", "TikTok Shop", "Instagram", "Lojas online"];
 
   return (
-    <section className="relative overflow-hidden bg-zinc-950 px-4 py-20 sm:px-6 sm:py-28 lg:py-36">
-      {/* Emerald radial glow — purely decorative */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <div className="h-[500px] w-[700px] rounded-full bg-emerald-500/10 blur-3xl" />
+    <section className="relative overflow-hidden bg-zinc-950 px-4 py-16 sm:px-6 sm:py-20 lg:py-28">
+      {/* Grid pattern */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+
+      {/* Primary glow — center-top */}
+      <div aria-hidden="true" className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2">
+        <div className="h-[600px] w-[900px] rounded-full bg-emerald-500/15 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-4xl text-center">
-        <div className="mb-6 flex flex-wrap justify-center gap-2">
-          {platforms.map((p) => (
-            <span
-              key={p}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-400"
-            >
-              {p}
-            </span>
-          ))}
-        </div>
+      {/* Secondary glow — bottom-right, desktop only */}
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-20 -right-20 hidden lg:block">
+        <div className="h-[400px] w-[400px] rounded-full bg-emerald-500/10 blur-3xl" />
+      </div>
 
-        <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
-          Transforme fotos simples de produtos em{" "}
-          <span className="text-emerald-400">imagens profissionais</span>{" "}
-          para vender mais
-        </h1>
+      <div className="relative mx-auto max-w-6xl">
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          {/* Left — text content */}
+          <div>
+            <div className="mb-6 flex flex-wrap gap-2">
+              {platforms.map((p) => (
+                <span
+                  key={p}
+                  className="rounded-full border border-zinc-700 px-3 py-1 text-xs font-medium text-zinc-400"
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
 
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
-          Com inteligência artificial, você transforma qualquer foto de produto em imagem
-          com qualidade de estúdio — de forma rápida, sem fotógrafo e sem equipamento caro.
-        </p>
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
+              Transforme fotos simples em{" "}
+              <span className="text-emerald-400">imagens profissionais</span>{" "}
+              para vender mais
+            </h1>
 
-        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-          <Link
-            href="/generate"
-            className="inline-flex items-center rounded-xl bg-emerald-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/40 transition-all"
-          >
-            Gerar minha imagem →
-          </Link>
-          <span className="text-sm text-zinc-500">R$ 9,90 por imagem · Sem assinatura</span>
+            <p className="mt-5 text-lg leading-relaxed text-zinc-400">
+              Com inteligência artificial, você transforma qualquer foto de produto em imagem
+              com qualidade de estúdio — de forma rápida, sem fotógrafo e sem equipamento caro.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                href="/generate"
+                className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-emerald-500/50 transition-all"
+              >
+                Gerar minha imagem →
+              </Link>
+              <span className="text-sm text-zinc-500">R$ 9,90 por imagem · Sem assinatura</span>
+            </div>
+          </div>
+
+          {/* Right — product mockup */}
+          <div className="flex justify-center pb-8 lg:justify-end lg:pb-0">
+            <HeroMockup />
+          </div>
         </div>
       </div>
     </section>
@@ -106,7 +209,7 @@ const STEPS = [
 
 function HowItWorks() {
   return (
-    <section className="bg-white px-4 py-20 sm:px-6">
+    <section className="bg-zinc-50 px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-5xl">
         <div className="mb-14 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
@@ -117,9 +220,12 @@ function HowItWorks() {
           </p>
         </div>
 
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((s) => (
-            <div key={s.step} className="flex flex-col">
+            <div
+              key={s.step}
+              className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+            >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100 text-2xl">
                 {s.icon}
               </div>
@@ -163,7 +269,7 @@ const BENEFITS = [
 
 function Benefits() {
   return (
-    <section className="bg-zinc-50 px-4 py-20 sm:px-6">
+    <section className="bg-white px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-5xl">
         <div className="mb-14 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
@@ -178,7 +284,7 @@ function Benefits() {
           {BENEFITS.map((b) => (
             <div
               key={b.title}
-              className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+              className="rounded-2xl border border-zinc-100 bg-zinc-50 p-7 transition-all hover:-translate-y-1 hover:shadow-md"
             >
               <span className="text-3xl">{b.icon}</span>
               <h3 className="mt-4 text-base font-semibold text-zinc-900">{b.title}</h3>
@@ -202,7 +308,7 @@ function Pricing() {
   ];
 
   return (
-    <section className="bg-white px-4 py-20 sm:px-6">
+    <section className="bg-zinc-50 px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-md text-center">
         <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
           Preço simples
@@ -234,7 +340,7 @@ function Pricing() {
 
           <Link
             href="/generate"
-            className="mt-8 flex items-center justify-center rounded-xl bg-zinc-900 px-6 py-3.5 text-base font-semibold text-white hover:bg-zinc-700 transition-colors"
+            className="mt-8 flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/40 transition-all"
           >
             Gerar minha primeira imagem
           </Link>
