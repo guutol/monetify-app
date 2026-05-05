@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+
+const STYLE_CHIPS = [
+  "fundo branco limpo",
+  "iluminação de estúdio",
+  "produto centralizado",
+  "alta resolução",
+  "ângulo frontal",
+  "luz natural suave",
+];
 
 export default function GeneratePage() {
   const router = useRouter();
@@ -10,8 +19,17 @@ export default function GeneratePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function appendChip(chip: string) {
+    setPrompt((prev) => {
+      const trimmed = prev.trimEnd();
+      if (!trimmed) return chip.charAt(0).toUpperCase() + chip.slice(1);
+      if (trimmed.endsWith(",")) return `${trimmed} ${chip}`;
+      return `${trimmed}, ${chip}`;
+    });
+  }
+
   async function handleCheckout() {
-    if (!prompt.trim() || isLoading) return;
+    if (prompt.trim().length < 5 || isLoading) return;
 
     setIsLoading(true);
     setError(null);
@@ -38,44 +56,208 @@ export default function GeneratePage() {
     }
   }
 
+  const canSubmit = prompt.trim().length >= 5 && !isLoading;
+
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-zinc-900">Gerar Imagem</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          R$ 9,90 por imagem gerada — pagamento via PIX
+    <div className="mx-auto max-w-3xl">
+      {/* Back link */}
+      <a
+        href="/"
+        className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition-colors hover:text-zinc-600"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+        Voltar para início
+      </a>
+
+      {/* Page header */}
+      <div className="mb-8 mt-6">
+        <p className="text-sm font-semibold text-emerald-600">Monetify</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">
+          Gere sua imagem profissional
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500">
+          Descreva o produto, escolha o estilo e avance para o pagamento via PIX.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-zinc-700">
+      {/* Main grid */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Left: prompt */}
+        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <label
+            htmlFor="prompt"
+            className="mb-3 block text-sm font-semibold text-zinc-800"
+          >
             Descreva o produto
           </label>
           <textarea
+            id="prompt"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Ex: Tênis esportivo branco com detalhes azuis, fundo branco limpo, iluminação profissional de estúdio"
-            rows={4}
-            className="w-full rounded-lg border border-zinc-300 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 resize-none"
+            rows={6}
+            maxLength={1000}
+            className="w-full resize-none rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
-          <p className="mt-1 text-xs text-zinc-400">{prompt.length}/1000 caracteres</p>
+          <div className="mt-2 flex items-start justify-between gap-4">
+            <p className="text-xs leading-relaxed text-zinc-400">
+              Quanto mais detalhada a descrição, melhor o resultado.
+            </p>
+            <p
+              className={cn(
+                "shrink-0 text-xs tabular-nums",
+                prompt.length > 800 ? "text-amber-500" : "text-zinc-400"
+              )}
+            >
+              {prompt.length}/1000
+            </p>
+          </div>
+
+          {/* Style chips */}
+          <div className="mt-4 border-t border-zinc-100 pt-4">
+            <p className="mb-2.5 text-xs font-medium text-zinc-500">
+              Adicionar estilo
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {STYLE_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => appendChip(chip)}
+                  className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
+                >
+                  + {chip}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        {/* Right: price + CTA */}
+        <div className="flex flex-col gap-5">
+          {/* Error */}
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
-        <Button
-          onClick={handleCheckout}
-          disabled={isLoading || prompt.trim().length < 5}
-          size="lg"
-          className="w-full"
-        >
-          {isLoading ? "Criando cobrança..." : "Pagar R$ 9,90 e Gerar"}
-        </Button>
+          {/* Price card */}
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-start justify-between">
+              <div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold text-zinc-900">R$ 9,90</span>
+                  <span className="text-sm text-zinc-500">por imagem</span>
+                </div>
+                <p className="mt-0.5 text-xs text-zinc-400">
+                  Pagamento único, sem assinatura.
+                </p>
+              </div>
+              <span className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-600">
+                PIX
+              </span>
+            </div>
+
+            <button
+              onClick={handleCheckout}
+              disabled={!canSubmit}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-all",
+                canSubmit
+                  ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600 active:scale-[0.98]"
+                  : "cursor-not-allowed bg-zinc-100 text-zinc-400"
+              )}
+            >
+              {isLoading ? (
+                <>
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  Criando cobrança...
+                </>
+              ) : (
+                "Continuar para pagamento"
+              )}
+            </button>
+
+            {!canSubmit && !isLoading && prompt.length > 0 && (
+              <p className="mt-2 text-center text-xs text-zinc-400">
+                Adicione pelo menos 5 caracteres na descrição
+              </p>
+            )}
+          </div>
+
+          {/* Trust signals */}
+          <div className="space-y-2.5 px-1">
+            <p className="flex items-center gap-2 text-xs text-zinc-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0"
+              >
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              Sua descrição é usada apenas para gerar o resultado.
+            </p>
+            <p className="flex items-center gap-2 text-xs text-zinc-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0"
+              >
+                <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+                <path d="m2 17 10 5 10-5" />
+                <path d="m2 12 10 5 10-5" />
+              </svg>
+              Ideal para Shopee, Mercado Livre, TikTok Shop e Instagram.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
