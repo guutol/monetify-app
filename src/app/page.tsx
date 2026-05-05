@@ -46,20 +46,24 @@ function HeroMockup() {
 
         {/* Before / After */}
         <div className="relative grid grid-cols-2 gap-3">
+          {/* Before — foto original: produto pequeno, desfocado, fundo escuro */}
           <div>
             <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800">
-              <span className="text-4xl opacity-50">📦</span>
+              <span className="text-2xl opacity-30 blur-[1px]">📦</span>
               <div className="absolute bottom-2 left-2 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-zinc-400">
-                Antes
+                Foto original
               </div>
             </div>
           </div>
 
+          {/* After — imagem gerada: produto grande, nítido, sombra, fundo branco */}
           <div>
-            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-50 to-white shadow-inner">
-              <span className="text-4xl">📦</span>
+            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white shadow-inner">
+              {/* Sombra do produto */}
+              <div className="absolute bottom-4 left-1/2 h-3 w-10 -translate-x-1/2 rounded-full bg-zinc-200 blur-sm" />
+              <span className="relative text-5xl drop-shadow-sm">📦</span>
               <div className="absolute bottom-2 left-2 rounded bg-black/10 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                Depois
+                Imagem gerada
               </div>
             </div>
           </div>
