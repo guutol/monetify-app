@@ -52,8 +52,8 @@ function Hero() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
-          Com inteligência artificial, você gera fotos com qualidade de estúdio para seus
-          produtos — em segundos, sem fotógrafo, sem equipamento caro.
+          Com inteligência artificial, você transforma qualquer foto de produto em imagem
+          com qualidade de estúdio — de forma rápida, sem fotógrafo e sem equipamento caro.
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -95,7 +95,7 @@ const STEPS = [
     icon: "⬇️",
     step: "04",
     title: "Baixe a imagem pronta",
-    desc: "Em segundos sua imagem profissional está pronta para qualquer marketplace.",
+    desc: "Em poucos instantes sua imagem profissional está pronta para usar em qualquer marketplace.",
   },
 ];
 
@@ -142,7 +142,7 @@ const BENEFITS = [
   {
     icon: "🛡️",
     title: "Mais confiança para o comprador",
-    desc: "Produtos com foto profissional transmitem credibilidade e convertem mais. A primeira impressão é visual.",
+    desc: "Produtos com foto profissional transmitem credibilidade e geram mais confiança no comprador. A primeira impressão sempre é visual.",
   },
   {
     icon: "🏪",
@@ -190,7 +190,7 @@ function Benefits() {
 
 function Pricing() {
   const includes = [
-    "Imagem gerada com IA em alta resolução",
+    "Imagem gerada com IA em qualidade profissional",
     "Download imediato após a geração",
     "Pronto para Shopee, Mercado Livre e mais",
     "Pagamento via PIX — rápido e seguro",
@@ -249,7 +249,7 @@ function FinalCTA() {
           Pronto para vender mais com imagens profissionais?
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400">
-          Comece agora mesmo. Sem assinatura, sem contrato. Pague apenas quando gerar.
+          Sem assinatura, sem contrato, sem compromisso. Pague apenas quando precisar gerar.
         </p>
         <Link
           href="/generate"
