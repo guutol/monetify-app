@@ -92,8 +92,7 @@ export default async function DashboardPage() {
   const firstName = session.user.name?.split(" ")[0] ?? "usuário";
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-zinc-950">
-      <div className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 sm:px-6 lg:px-10">
+    <div className="mx-auto w-full max-w-5xl min-w-0">
 
         {/* Page header */}
         <div className="mb-8 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -319,7 +318,6 @@ export default async function DashboardPage() {
             })}
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -338,7 +336,7 @@ function StatCard({
   return (
     <div className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-xs text-zinc-500">{label}</p>
+        <p className="min-w-0 text-xs leading-tight text-zinc-500">{label}</p>
         <div className="shrink-0 text-zinc-600">{icon}</div>
       </div>
       <p className={`text-3xl font-bold tabular-nums ${accent}`}>{value}</p>

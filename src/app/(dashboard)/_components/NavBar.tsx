@@ -22,14 +22,14 @@ export function NavBar() {
           Monetify
         </Link>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                   isActive
                     ? "bg-emerald-500/10 text-emerald-400"
                     : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
