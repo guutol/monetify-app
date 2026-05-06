@@ -211,7 +211,7 @@ export function PayClient({
 
         {/* Back link */}
         <a
-          href="/generate"
+          href={phase === "done" ? "/history" : "/generate"}
           className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
         >
           <svg
@@ -227,7 +227,7 @@ export function PayClient({
           >
             <path d="m15 18-6-6 6-6" />
           </svg>
-          Voltar para geração
+          {phase === "done" ? "Voltar para histórico" : "Voltar para geração"}
         </a>
 
         {/* Page header */}
