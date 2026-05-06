@@ -241,23 +241,24 @@ export function PayClient({
 
         {/* ── waiting_payment ─────────────────────────────── */}
         {phase === "waiting_payment" && (
+          <>
+            {/* Dev alert — full width, above grid, visible on all viewports */}
+            {isDevEnvironment && (
+              <div className="mb-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-4">
+                <p className="text-xs font-semibold text-amber-400">
+                  Ambiente de teste
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-amber-300/70">
+                  Este pagamento está usando o modo de desenvolvimento. Nenhum
+                  PIX real será debitado.
+                </p>
+              </div>
+            )}
+
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
 
-            {/* Left column */}
-            <div className="min-w-0 space-y-5">
-
-              {/* Dev alert */}
-              {isDevEnvironment && (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-4">
-                  <p className="text-xs font-semibold text-amber-400">
-                    Ambiente de teste
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-amber-300/70">
-                    Este pagamento está usando o modo de desenvolvimento. Nenhum
-                    PIX real será debitado.
-                  </p>
-                </div>
-              )}
+            {/* Left column — order-2 on mobile so payment card shows first */}
+            <div className="order-2 min-w-0 space-y-5 lg:order-1">
 
               {/* Order card */}
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
@@ -301,8 +302,8 @@ export function PayClient({
               </div>
             </div>
 
-            {/* Right column: payment card */}
-            <div className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30">
+            {/* Right column — order-1 on mobile so it appears above left col */}
+            <div className="order-1 min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30 lg:order-2">
               <p className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Resumo do pagamento
               </p>
@@ -436,6 +437,7 @@ export function PayClient({
               </div>
             </div>
           </div>
+          </>
         )}
 
         {/* ── paid_ready ───────────────────────────────────── */}
