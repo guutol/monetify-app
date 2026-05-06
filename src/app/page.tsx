@@ -1,19 +1,34 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
-function Navbar() {
+function Navbar({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <span className="text-xl font-bold tracking-tight text-zinc-900">Monetify</span>
+        <Link
+          href={isLoggedIn ? "/dashboard" : "/"}
+          className="text-xl font-bold tracking-tight text-zinc-900 transition-colors hover:text-zinc-600"
+        >
+          Monetify
+        </Link>
         <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            Entrar
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              href="/dashboard"
+              className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              Entrar
+            </Link>
+          )}
           <Link
             href="/generate"
             className="hidden sm:inline-flex items-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
@@ -393,10 +408,13 @@ function Footer() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+  const isLoggedIn = !!session?.user?.id;
+
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} />
       <main className="flex-1">
         <Hero />
         <HowItWorks />
