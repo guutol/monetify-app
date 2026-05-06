@@ -12,28 +12,31 @@ function formatDate(date: Date) {
   });
 }
 
-const STATUS_PAYMENT_LABEL: Record<string, string> = {
-  PENDING: "Aguardando",
-  PAID: "Pago",
-  EXPIRED: "Expirado",
-  CANCELLED: "Cancelado",
-  REFUNDED: "Reembolsado",
-  FAILED: "Falhou",
+const PAYMENT_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  PENDING:   { label: "Aguardando PIX", className: "border border-amber-500/30 bg-amber-500/10 text-amber-400" },
+  PAID:      { label: "Pago",           className: "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  EXPIRED:   { label: "Expirado",       className: "border border-zinc-700 bg-zinc-800 text-zinc-500" },
+  CANCELLED: { label: "Cancelado",      className: "border border-zinc-700 bg-zinc-800 text-zinc-500" },
+  REFUNDED:  { label: "Reembolsado",    className: "border border-zinc-700 bg-zinc-800 text-zinc-500" },
+  FAILED:    { label: "Falhou",         className: "border border-red-500/30 bg-red-500/10 text-red-400" },
 };
 
-const STATUS_GENERATION_LABEL: Record<string, string> = {
-  PENDING: "Aguardando geração",
-  PROCESSING: "Gerando...",
-  COMPLETED: "Gerado",
-  FAILED: "Falhou",
+const GENERATION_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  PENDING:    { label: "Na fila",   className: "border border-amber-500/30 bg-amber-500/10 text-amber-400" },
+  PROCESSING: { label: "Gerando…", className: "border border-blue-500/30 bg-blue-500/10 text-blue-400" },
+  COMPLETED:  { label: "Gerada",   className: "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  FAILED:     { label: "Falhou",   className: "border border-red-500/30 bg-red-500/10 text-red-400" },
 };
 
-const STATUS_GENERATION_COLOR: Record<string, string> = {
-  PENDING: "text-zinc-400",
-  PROCESSING: "text-blue-500",
-  COMPLETED: "text-green-600",
-  FAILED: "text-red-500",
-};
+function Badge({ label, className }: { label: string; className: string }) {
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -67,16 +70,18 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const totalPaid = stats
-    .filter((s) => s.paymentStatus === "PAID")
-    .reduce((sum, s) => sum + s._count.id, 0);
+  const totalOrders = stats.reduce((sum, s) => sum + s._count.id, 0);
 
   const totalCompleted = stats
     .filter((s) => s.generationStatus === "COMPLETED")
     .reduce((sum, s) => sum + s._count.id, 0);
 
-  const totalPending = stats
-    .filter((s) => s.generationStatus === "PENDING" && s.paymentStatus === "PAID")
+  const totalProcessing = stats
+    .filter(
+      (s) =>
+        s.paymentStatus === "PAID" &&
+        (s.generationStatus === "PENDING" || s.generationStatus === "PROCESSING")
+    )
     .reduce((sum, s) => sum + s._count.id, 0);
 
   const totalFailed = stats
@@ -84,125 +89,234 @@ export default async function DashboardPage() {
     .reduce((sum, s) => sum + s._count.id, 0);
 
   const hasAnyOrder = recentOrders.length > 0;
+  const firstName = session.user.name?.split(" ")[0] ?? "usuário";
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Olá, {session.user.name?.split(" ")[0] ?? "usuário"}
-          </p>
-        </div>
-        <Link
-          href="/generate"
-          className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
-        >
-          + Gerar imagem
-        </Link>
-      </div>
+    /* -m-8 cancels DashboardLayout's p-8 so the dark bg fills the full area */
+    <div className="-m-8 min-h-screen bg-zinc-950 px-6 py-10 lg:px-10">
+      <div className="mx-auto max-w-5xl">
 
-      {/* Stats cards */}
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Imagens geradas" value={totalCompleted} color="text-green-600" />
-        <StatCard label="Pedidos pagos" value={totalPaid} color="text-zinc-900" />
-        <StatCard label="Gerações pendentes" value={totalPending} color="text-amber-500" />
-        <StatCard label="Gerações com falha" value={totalFailed} color="text-red-500" />
-      </div>
-
-      {/* Recent orders */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-zinc-800">Pedidos recentes</h2>
-        {hasAnyOrder && (
-          <Link href="/history" className="text-sm text-zinc-500 hover:text-zinc-800 transition-colors">
-            Ver histórico →
-          </Link>
-        )}
-      </div>
-
-      {!hasAnyOrder ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 py-16 text-center">
-          <p className="text-3xl">🖼️</p>
-          <p className="mt-3 text-sm font-medium text-zinc-700">Nenhum pedido ainda</p>
-          <p className="mt-1 text-sm text-zinc-400">Crie sua primeira imagem de produto com IA</p>
+        {/* Page header */}
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-emerald-400">Monetify</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+              Dashboard
+            </h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              Olá, {firstName}. Acompanhe suas imagens, pedidos e resultados recentes.
+            </p>
+          </div>
           <Link
             href="/generate"
-            className="mt-5 inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+            className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
           >
-            Gerar imagem
+            Nova imagem
           </Link>
         </div>
-      ) : (
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-          {recentOrders.map((order, i) => {
-            const imageUrl = order.image?.imageUrl || null;
-            const isLast = i === recentOrders.length - 1;
 
-            return (
-              <div
-                key={order.id}
-                className={`flex items-center gap-4 px-4 py-3 ${!isLast ? "border-b border-zinc-100" : ""}`}
+        {/* Stats grid */}
+        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatCard
+            label="Total de pedidos"
+            value={totalOrders}
+            accent="text-white"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Imagens geradas"
+            value={totalCompleted}
+            accent="text-emerald-400"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Em processamento"
+            value={totalProcessing}
+            accent="text-amber-400"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Gerações com falha"
+            value={totalFailed}
+            accent="text-red-400"
+            icon={
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            }
+          />
+        </div>
+
+        {/* Recent orders header */}
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-white">Pedidos recentes</h2>
+          {hasAnyOrder && (
+            <Link
+              href="/history"
+              className="text-sm text-zinc-500 transition-colors hover:text-white"
+            >
+              Ver histórico →
+            </Link>
+          )}
+        </div>
+
+        {!hasAnyOrder ? (
+          /* ── Empty state ─────────────────────────────────── */
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 py-20 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-zinc-500"
               >
-                {/* Thumbnail */}
-                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
-                  {imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt={order.prompt ?? "Imagem"}
-                      width={48}
-                      height={48}
-                      className="h-full w-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-lg text-zinc-300">
-                      🖼
-                    </div>
-                  )}
-                </div>
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+            </div>
+            <h2 className="mt-5 text-base font-semibold text-white">
+              Nenhum pedido ainda
+            </h2>
+            <p className="mt-1.5 text-sm text-zinc-400">
+              Gere sua primeira imagem profissional para começar.
+            </p>
+            <Link
+              href="/generate"
+              className="mt-6 inline-flex items-center rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+            >
+              Gerar primeira imagem
+            </Link>
+          </div>
+        ) : (
+          /* ── Recent order list ───────────────────────────── */
+          <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+            {recentOrders.map((order, i) => {
+              const imageUrl = order.image?.imageUrl || null;
+              const isLast = i === recentOrders.length - 1;
+              const isPaid = order.paymentStatus === "PAID";
+              const isCompleted = order.generationStatus === "COMPLETED";
+              const isFailed = order.generationStatus === "FAILED" && isPaid;
+              const awaitingPayment = order.paymentStatus === "PENDING";
 
-                {/* Info */}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-800">
-                    {order.prompt ?? "—"}
-                  </p>
-                  <div className="mt-0.5 flex items-center gap-2 text-xs text-zinc-400">
-                    <span>{formatDate(order.createdAt)}</span>
-                    <span>·</span>
-                    <span
-                      className={STATUS_GENERATION_COLOR[order.generationStatus] ?? "text-zinc-400"}
-                    >
-                      {STATUS_GENERATION_LABEL[order.generationStatus] ?? order.generationStatus}
-                    </span>
-                    <span>·</span>
-                    <span>{STATUS_PAYMENT_LABEL[order.paymentStatus] ?? order.paymentStatus}</span>
+              // Show generation badge if paid, payment badge otherwise
+              const badgeCfg = isPaid
+                ? GENERATION_STATUS_CONFIG[order.generationStatus]
+                : PAYMENT_STATUS_CONFIG[order.paymentStatus];
+
+              return (
+                <div
+                  key={order.id}
+                  className={`flex items-center gap-4 px-5 py-4 ${
+                    !isLast ? "border-b border-zinc-800" : ""
+                  }`}
+                >
+                  {/* Thumbnail */}
+                  <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-zinc-800">
+                    {isCompleted && imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={order.prompt ?? "Imagem"}
+                        width={44}
+                        height={44}
+                        className="h-full w-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-zinc-600"
+                        >
+                          <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                          <circle cx="9" cy="9" r="2" />
+                          <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-zinc-200">
+                      {order.prompt ?? "—"}
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-zinc-500">
+                        {formatDate(order.createdAt)}
+                      </span>
+                      {badgeCfg && (
+                        <Badge label={badgeCfg.label} className={badgeCfg.className} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action */}
+                  <div className="shrink-0">
+                    {awaitingPayment && (
+                      <Link
+                        href={`/pay/${order.id}`}
+                        className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
+                      >
+                        Pagar
+                      </Link>
+                    )}
+                    {isCompleted && (
+                      <Link
+                        href={`/pay/${order.id}`}
+                        className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                      >
+                        Ver resultado
+                      </Link>
+                    )}
+                    {isFailed && (
+                      <Link
+                        href={`/pay/${order.id}`}
+                        className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-600"
+                      >
+                        Tentar novamente
+                      </Link>
+                    )}
                   </div>
                 </div>
-
-                {/* Action */}
-                {order.generationStatus === "COMPLETED" && imageUrl && (
-                  <a
-                    href={imageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shrink-0 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
-                  >
-                    Ver
-                  </a>
-                )}
-                {order.paymentStatus === "PENDING" && (
-                  <Link
-                    href={`/pay/${order.id}`}
-                    className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-100 transition-colors"
-                  >
-                    Pagar
-                  </Link>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -210,16 +324,21 @@ export default async function DashboardPage() {
 function StatCard({
   label,
   value,
-  color,
+  accent,
+  icon,
 }: {
   label: string;
   value: number;
-  color: string;
+  accent: string;
+  icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs text-zinc-500">{label}</p>
+        <div className="text-zinc-600">{icon}</div>
+      </div>
+      <p className={`text-3xl font-bold tabular-nums ${accent}`}>{value}</p>
     </div>
   );
 }
