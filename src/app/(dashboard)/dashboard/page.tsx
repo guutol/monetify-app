@@ -92,9 +92,8 @@ export default async function DashboardPage() {
   const firstName = session.user.name?.split(" ")[0] ?? "usuário";
 
   return (
-    /* -m-8 cancels DashboardLayout's p-8 so the dark bg fills the full area */
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-zinc-950 px-4 py-8 sm:px-6 lg:px-10">
-      <div className="mx-auto w-full max-w-5xl min-w-0">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-zinc-950">
+      <div className="mx-auto w-full max-w-5xl min-w-0 px-4 py-8 sm:px-6 lg:px-10">
 
         {/* Page header */}
         <div className="mb-8 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
