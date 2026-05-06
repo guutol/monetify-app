@@ -16,7 +16,7 @@ export function NavBar() {
     <nav className="border-b border-zinc-800 bg-zinc-900">
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
         <Link
-          href="/dashboard"
+          href="/"
           className="text-sm font-bold text-emerald-400 transition-colors hover:text-emerald-300"
         >
           Monetify
