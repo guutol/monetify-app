@@ -93,7 +93,7 @@ export default async function DashboardPage() {
 
   return (
     /* -m-8 cancels DashboardLayout's p-8 so the dark bg fills the full area */
-    <div className="-m-8 min-h-screen bg-zinc-950 px-6 py-10 lg:px-10">
+    <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
       <div className="mx-auto max-w-5xl">
 
         {/* Page header */}
@@ -333,10 +333,10 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs text-zinc-500">{label}</p>
-        <div className="text-zinc-600">{icon}</div>
+    <div className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-xs text-zinc-500">{label}</p>
+        <div className="shrink-0 text-zinc-600">{icon}</div>
       </div>
       <p className={`text-3xl font-bold tabular-nums ${accent}`}>{value}</p>
     </div>
