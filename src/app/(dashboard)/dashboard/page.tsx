@@ -93,11 +93,11 @@ export default async function DashboardPage() {
 
   return (
     /* -m-8 cancels DashboardLayout's p-8 so the dark bg fills the full area */
-    <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
-      <div className="mx-auto max-w-5xl">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-zinc-950 px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto w-full max-w-5xl min-w-0">
 
         {/* Page header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-8 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-semibold text-emerald-400">Monetify</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
@@ -109,14 +109,14 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/generate"
-            className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+            className="w-fit shrink-0 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
           >
             Nova imagem
           </Link>
         </div>
 
         {/* Stats grid */}
-        <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mb-8 grid min-w-0 grid-cols-1 gap-4 min-[360px]:grid-cols-2 sm:grid-cols-4">
           <StatCard
             label="Total de pedidos"
             value={totalOrders}
@@ -229,10 +229,12 @@ export default async function DashboardPage() {
                 ? GENERATION_STATUS_CONFIG[order.generationStatus]
                 : PAYMENT_STATUS_CONFIG[order.paymentStatus];
 
+              const hasAction = awaitingPayment || isCompleted || isFailed;
+
               return (
                 <div
                   key={order.id}
-                  className={`flex items-center gap-4 px-5 py-4 ${
+                  className={`flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 px-4 py-4 sm:flex-nowrap sm:gap-x-4 sm:px-5 ${
                     !isLast ? "border-b border-zinc-800" : ""
                   }`}
                 >
@@ -284,33 +286,35 @@ export default async function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Action */}
-                  <div className="shrink-0">
-                    {awaitingPayment && (
-                      <Link
-                        href={`/pay/${order.id}`}
-                        className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
-                      >
-                        Pagar
-                      </Link>
-                    )}
-                    {isCompleted && (
-                      <Link
-                        href={`/pay/${order.id}`}
-                        className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
-                      >
-                        Ver resultado
-                      </Link>
-                    )}
-                    {isFailed && (
-                      <Link
-                        href={`/pay/${order.id}`}
-                        className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-600"
-                      >
-                        Tentar novamente
-                      </Link>
-                    )}
-                  </div>
+                  {/* Action — wraps to new line on mobile, stays inline on sm+ */}
+                  {hasAction && (
+                    <div className="flex w-full justify-end sm:w-auto sm:shrink-0">
+                      {awaitingPayment && (
+                        <Link
+                          href={`/pay/${order.id}`}
+                          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20"
+                        >
+                          Pagar
+                        </Link>
+                      )}
+                      {isCompleted && (
+                        <Link
+                          href={`/pay/${order.id}`}
+                          className="rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                        >
+                          Ver resultado
+                        </Link>
+                      )}
+                      {isFailed && (
+                        <Link
+                          href={`/pay/${order.id}`}
+                          className="rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-600"
+                        >
+                          Tentar novamente
+                        </Link>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
