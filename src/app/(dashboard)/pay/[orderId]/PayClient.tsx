@@ -206,7 +206,7 @@ export function PayClient({
   };
 
   return (
-    <div className="-m-8 min-h-screen bg-zinc-950 px-6 py-10 lg:px-10">
+    <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
       <div className="mx-auto max-w-5xl">
 
         {/* Back link */}
@@ -241,10 +241,10 @@ export function PayClient({
 
         {/* ── waiting_payment ─────────────────────────────── */}
         {phase === "waiting_payment" && (
-          <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
 
             {/* Left column */}
-            <div className="space-y-5">
+            <div className="min-w-0 space-y-5">
 
               {/* Dev alert */}
               {isDevEnvironment && (
@@ -265,7 +265,7 @@ export function PayClient({
                   Seu pedido
                 </p>
                 {prompt && (
-                  <p className="line-clamp-3 text-sm leading-relaxed text-zinc-300">
+                  <p className="line-clamp-3 break-words text-sm leading-relaxed text-zinc-300">
                     &ldquo;{prompt}&rdquo;
                   </p>
                 )}
@@ -302,7 +302,7 @@ export function PayClient({
             </div>
 
             {/* Right column: payment card */}
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30">
+            <div className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30">
               <p className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Resumo do pagamento
               </p>
