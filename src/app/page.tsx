@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
@@ -247,6 +248,95 @@ function HowItWorks() {
   );
 }
 
+// ─── Showcase ────────────────────────────────────────────────────────────────
+
+const SHOWCASE = [
+  {
+    before: "/showcase/produto-1-antes.png",
+    after:  "/showcase/produto-1-depois.png",
+  },
+  {
+    before: "/showcase/produto-2-antes.png",
+    after:  "/showcase/produto-2-depois.png",
+  },
+  {
+    before: "/showcase/produto-3-antes.png",
+    after:  "/showcase/produto-3-depois.png",
+  },
+];
+
+function Showcase() {
+  return (
+    <section className="bg-zinc-950 px-4 py-20 sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-14 text-center">
+          <p className="mb-2 text-sm font-semibold text-emerald-400">Resultados reais</p>
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Veja a diferença na prática
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-zinc-400">
+            Fotos simples de produtos transformadas em imagens mais limpas, profissionais e prontas para vender.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          {SHOWCASE.map((item, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+            >
+              {/* Card header */}
+              <div className="flex items-center gap-2 border-b border-zinc-800 px-5 py-3">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-xs font-semibold text-zinc-400">Produto real</span>
+              </div>
+
+              {/* Before / After */}
+              <div className="grid grid-cols-1 sm:grid-cols-2">
+                {/* Before */}
+                <div>
+                  <div className="relative aspect-square w-full overflow-hidden bg-zinc-800">
+                    <Image
+                      src={item.before}
+                      alt={`Produto ${i + 1} — antes`}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute left-3 top-3">
+                      <span className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-2.5 py-1 text-xs font-semibold text-zinc-400 backdrop-blur-sm">
+                        Antes
+                      </span>
+                    </div>
+                  </div>
+                  <p className="px-4 py-3 text-xs text-zinc-500">Foto original enviada</p>
+                </div>
+
+                {/* After */}
+                <div className="border-t border-zinc-800 sm:border-l sm:border-t-0">
+                  <div className="relative aspect-square w-full overflow-hidden bg-zinc-800">
+                    <Image
+                      src={item.after}
+                      alt={`Produto ${i + 1} — depois`}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute left-3 top-3">
+                      <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-400 backdrop-blur-sm">
+                        Depois
+                      </span>
+                    </div>
+                  </div>
+                  <p className="px-4 py-3 text-xs text-zinc-500">Imagem gerada pelo Monetify</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Benefícios ───────────────────────────────────────────────────────────────
 
 const BENEFITS = [
@@ -400,6 +490,7 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <HowItWorks />
+        <Showcase />
         <Benefits />
         <Pricing />
         <FinalCTA />
