@@ -21,10 +21,10 @@ function formatAmount(cents: number) {
 }
 
 const GENERATION_STATUS_CONFIG = {
-  COMPLETED:  { label: "Gerada",      className: "bg-green-100 text-green-700" },
-  FAILED:     { label: "Falhou",      className: "bg-red-100 text-red-700" },
-  PROCESSING: { label: "Gerando…",   className: "bg-blue-100 text-blue-700" },
-  PENDING:    { label: "Aguardando", className: "bg-yellow-100 text-yellow-700" },
+  COMPLETED:  { label: "Gerada",     className: "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  FAILED:     { label: "Falhou",     className: "border border-red-500/30 bg-red-500/10 text-red-400" },
+  PROCESSING: { label: "Gerando…",  className: "border border-blue-500/30 bg-blue-500/10 text-blue-400" },
+  PENDING:    { label: "Aguardando", className: "border border-amber-500/30 bg-amber-500/10 text-amber-400" },
 } as const;
 
 type GenerationStatus = keyof typeof GENERATION_STATUS_CONFIG;
@@ -32,10 +32,12 @@ type GenerationStatus = keyof typeof GENERATION_STATUS_CONFIG;
 function StatusBadge({ status }: { status: string }) {
   const cfg = GENERATION_STATUS_CONFIG[status as GenerationStatus] ?? {
     label: status,
-    className: "bg-zinc-100 text-zinc-600",
+    className: "border border-zinc-700 bg-zinc-800 text-zinc-400",
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}>
+    <span
+      className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium ${cfg.className}`}
+    >
       {cfg.label}
     </span>
   );
@@ -92,120 +94,223 @@ export default async function HistoryPage() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-8 flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Histórico</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Suas gerações de imagem com o Monetify
-          </p>
-        </div>
-        <Link
-          href="/generate"
-          className="inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
-        >
-          Nova imagem
-        </Link>
-      </div>
+    /* -m-8 cancels DashboardLayout's p-8 so the dark bg fills the full area */
+    <div className="-m-8 min-h-screen bg-zinc-950 px-6 py-10 lg:px-10">
+      <div className="mx-auto max-w-5xl">
 
-      {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 py-20 text-center">
-          <p className="text-4xl">🖼️</p>
-          <h2 className="mt-4 text-base font-semibold text-zinc-700">
-            Nenhuma geração ainda
-          </h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Gere sua primeira imagem de produto com IA
-          </p>
+        {/* Back link */}
+        <a
+          href="/generate"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Voltar para gerar imagem
+        </a>
+
+        {/* Page header */}
+        <div className="mb-8 mt-6 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold text-emerald-400">Monetify</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+              Histórico de imagens
+            </h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              Acompanhe seus pedidos, baixe resultados e tente novamente quando necessário.
+            </p>
+          </div>
           <Link
             href="/generate"
-            className="mt-6 inline-flex items-center rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
+            className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
           >
-            Gerar imagem
+            Nova imagem
           </Link>
         </div>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => {
-            const isCompleted = item.generationStatus === "COMPLETED";
-            const isFailed = item.generationStatus === "FAILED";
 
-            return (
-              <div
-                key={item.orderId}
-                className="overflow-hidden rounded-xl border border-zinc-200 bg-white"
+        {items.length === 0 ? (
+          /* ── Empty state ─────────────────────────────────── */
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 py-20 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-800">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-zinc-500"
               >
-                {/* Image area */}
-                <div className="relative aspect-square bg-zinc-100">
-                  {isCompleted && item.displayUrl ? (
-                    <Image
-                      src={item.displayUrl}
-                      alt={item.prompt ?? "Imagem gerada"}
-                      fill
-                      className="object-cover"
-                      unoptimized={!item.hasS3}
-                    />
-                  ) : (
-                    <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-                      <span className="text-3xl">
-                        {isFailed ? "❌" : "⏳"}
-                      </span>
-                      <p className="text-xs text-zinc-400">
-                        {isFailed
-                          ? "Geração falhou"
-                          : "Aguardando geração"}
-                      </p>
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+            </div>
+            <h2 className="mt-5 text-base font-semibold text-white">
+              Nenhuma imagem gerada ainda
+            </h2>
+            <p className="mt-1.5 text-sm text-zinc-400">
+              Comece criando sua primeira imagem profissional para vender melhor.
+            </p>
+            <Link
+              href="/generate"
+              className="mt-6 inline-flex items-center rounded-xl bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
+            >
+              Gerar primeira imagem
+            </Link>
+          </div>
+        ) : (
+          /* ── Order grid ──────────────────────────────────── */
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((item) => {
+              const isCompleted = item.generationStatus === "COMPLETED";
+              const isFailed    = item.generationStatus === "FAILED";
+              const isProcessing = item.generationStatus === "PROCESSING";
+
+              return (
+                <div
+                  key={item.orderId}
+                  className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/20"
+                >
+                  {/* Image preview area */}
+                  <div className="relative aspect-square bg-zinc-800">
+                    {isCompleted && item.displayUrl ? (
+                      <Image
+                        src={item.displayUrl}
+                        alt={item.prompt ?? "Imagem gerada"}
+                        fill
+                        className="object-cover"
+                        unoptimized={!item.hasS3}
+                      />
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center">
+                        {isFailed ? (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-red-500/40"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="15" y1="9" x2="9" y2="15" />
+                            <line x1="9" y1="9" x2="15" y2="15" />
+                          </svg>
+                        ) : isProcessing ? (
+                          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="32"
+                            height="32"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-amber-500/40"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                        )}
+                        <p className="text-xs text-zinc-500">
+                          {isFailed
+                            ? "Geração falhou"
+                            : isProcessing
+                            ? "Gerando…"
+                            : "Aguardando geração"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card body */}
+                  <div className="p-4">
+                    <div className="flex items-start gap-2">
+                      {item.prompt && (
+                        <p
+                          className="line-clamp-2 min-w-0 flex-1 break-words text-sm leading-relaxed text-zinc-300"
+                          title={item.prompt}
+                        >
+                          {item.prompt}
+                        </p>
+                      )}
+                      <StatusBadge status={item.generationStatus} />
                     </div>
-                  )}
-                </div>
 
-                {/* Card body */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    {item.prompt && (
-                      <p
-                        className="line-clamp-2 flex-1 text-sm text-zinc-700"
-                        title={item.prompt}
+                    <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
+                      <span>{formatDate(item.createdAt)}</span>
+                      <span>{formatAmount(item.amount)}</span>
+                    </div>
+
+                    <div className="mt-3 flex flex-col gap-2">
+                      {/* Download: only for completed images */}
+                      {isCompleted && item.displayUrl && (
+                        <a
+                          href={item.displayUrl}
+                          download={`monetify-${item.imageId ?? item.orderId}.png`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                          Baixar imagem
+                        </a>
+                      )}
+
+                      {/* Ver resultado / Tentar novamente */}
+                      <Link
+                        href={`/pay/${item.orderId}`}
+                        className={`flex w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                          isFailed
+                            ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                            : "border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        }`}
                       >
-                        {item.prompt}
-                      </p>
-                    )}
-                    <StatusBadge status={item.generationStatus} />
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between text-xs text-zinc-400">
-                    <span>{formatDate(item.createdAt)}</span>
-                    <span>{formatAmount(item.amount)}</span>
-                  </div>
-
-                  <div className="mt-3 flex flex-col gap-2">
-                    {/* Download: only for completed images */}
-                    {isCompleted && item.displayUrl && (
-                      <a
-                        href={item.displayUrl}
-                        download={`monetify-${item.imageId ?? item.orderId}.png`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex w-full items-center justify-center rounded-lg border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50 transition-colors"
-                      >
-                        Baixar imagem
-                      </a>
-                    )}
-
-                    {/* Ver resultado / Tentar novamente */}
-                    <Link
-                      href={`/pay/${item.orderId}`}
-                      className="flex w-full items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-100 transition-colors"
-                    >
-                      {isFailed ? "Tentar novamente" : "Ver resultado"}
-                    </Link>
+                        {isFailed ? "Tentar novamente" : "Ver resultado"}
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
