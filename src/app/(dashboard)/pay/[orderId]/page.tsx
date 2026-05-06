@@ -54,6 +54,7 @@ export default async function PayPage({
     <PayClient
       orderId={order.id}
       amount={order.amount}
+      prompt={order.prompt ?? ""}
       pixBrCode={order.pixBrCode ?? ""}
       pixBrCodeBase64={order.pixBrCodeBase64 ?? ""}
       pixExpiresAt={order.pixExpiresAt?.toISOString() ?? null}
