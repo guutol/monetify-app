@@ -31,7 +31,7 @@ export function PlansClient({ initialCredits }: Props) {
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handlePackagePurchase(planId: "starter" | "seller") {
+  async function handlePackagePurchase(planId: "pack_5" | "pack_15" | "pack_30") {
     if (loadingPlanId) return;
     setError(null);
     setLoadingPlanId(planId);
@@ -143,8 +143,8 @@ export function PlansClient({ initialCredits }: Props) {
         {packages.map((plan) => {
           const pct = savingsPct(plan);
           const isLoading = loadingPlanId === plan.planId;
-          const isBestValue = plan.planId === "seller";
-          const isMostChosen = plan.planId === "starter";
+          const isBestValue = plan.planId === "pack_30";
+          const isMostChosen = plan.planId === "pack_15";
 
           return (
             <div
@@ -187,7 +187,7 @@ export function PlansClient({ initialCredits }: Props) {
               <button
                 type="button"
                 disabled={!!loadingPlanId}
-                onClick={() => handlePackagePurchase(plan.planId as "starter" | "seller")}
+                onClick={() => handlePackagePurchase(plan.planId as "pack_5" | "pack_15" | "pack_30")}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
                   isBestValue
                     ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"

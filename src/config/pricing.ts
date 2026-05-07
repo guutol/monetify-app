@@ -3,7 +3,7 @@ export const PRICE_PER_GENERATION_CENTS = 990;
 
 // ── Definição de planos ────────────────────────────────────────────────────────
 
-export type PlanId = "single" | "starter" | "seller";
+export type PlanId = "single" | "pack_5" | "pack_15" | "pack_30";
 
 export interface PricingPlan {
   planId: PlanId;
@@ -20,22 +20,30 @@ export const PRICING_PLANS: PricingPlan[] = [
     label: "Avulso",
     amountCents: 990,
     productsCount: 1,
-    description: "1 produto • 2 prévias • escolha 1 imagem final",
+    description: "1 imagem • 2 prévias • escolha 1 imagem final",
   },
   {
-    planId: "starter",
-    label: "Pacote Inicial",
-    amountCents: 2490,
-    productsCount: 3,
-    description: "3 produtos • 2 prévias por produto • 1 imagem final por produto",
-    badge: "Mais escolhido",
+    planId: "pack_5",
+    label: "Pacote 5 imagens",
+    amountCents: 3490,
+    productsCount: 5,
+    description: "5 imagens • 2 prévias por produto • 1 imagem final por produto",
   },
   {
-    planId: "seller",
-    label: "Pacote Vendedor",
-    amountCents: 6990,
-    productsCount: 10,
-    description: "10 produtos • 2 prévias por produto • 1 imagem final por produto",
+    planId: "pack_15",
+    label: "Pacote 15 imagens",
+    amountCents: 7990,
+    productsCount: 15,
+    description: "15 imagens • 2 prévias por produto • 1 imagem final por produto",
+    badge: "Mais popular",
+  },
+  {
+    planId: "pack_30",
+    label: "Pacote 30 imagens",
+    amountCents: 12990,
+    productsCount: 30,
+    description: "30 imagens • 2 prévias por produto • 1 imagem final por produto",
+    badge: "Melhor valor",
   },
 ];
 
