@@ -23,6 +23,16 @@ export function getPresetName(style: string | null): StylePresetId {
   return STYLE_ID_TO_PRESET[style] ?? "marketplace_white";
 }
 
+// ── Global label/text preservation rule ───────────────────────────────────────
+// Inserted into every preset to prevent the model from erasing or rewriting
+// existing text, logos and printed design visible in the reference image.
+const LABEL_PRESERVATION_RULE =
+  "Preserve todo texto, rótulo, logo, marca impressa, nome do produto, design de embalagem, " +
+  "instruções impressas e qualquer escrita visível no produto original exatamente como aparece na imagem de referência. " +
+  "Não apague, não borre, não reescreva, não traduza, não corrija, não substitua, não estilize e não invente nenhum texto ou detalhe gráfico existente no produto. " +
+  "O rótulo e o design impresso são parte da identidade do produto e devem permanecer visíveis e fiéis à referência. " +
+  "Se não for possível reproduzir o texto perfeitamente, mantenha o produto o mais próximo possível da imagem original e evite alterar a região do rótulo.";
+
 // ── Full self-contained prompts per preset ─────────────────────────────────────
 // Each prompt combines product-preservation rules + style objective + restrictions.
 
@@ -32,7 +42,8 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
     "Gere uma foto profissional de marketplace com fundo branco limpo, mantendo somente o produto principal visível. " +
     "Remova completamente mãos, braços, pessoas, mesa, cenário, fundo original e qualquer elemento externo da foto original. " +
     "Preserve com máxima fidelidade o formato, cor, proporções, textura, material, acabamento, botões, entradas, rótulos, embalagem, câmeras, lentes, sensores, logo/marca existente e todos os detalhes reais do produto. " +
-    "Não redesenhe o produto, não troque a cor, não altere o modelo, não invente partes novas, não remova partes existentes e não adicione textos, logos, pessoas, mãos, acessórios ou elementos decorativos. " +
+    LABEL_PRESERVATION_RULE + " " +
+    "Não redesenhe o produto, não troque a cor, não altere o modelo, não invente partes novas, não remova partes existentes e não adicione textos novos, logos inexistentes, pessoas, mãos, acessórios ou elementos decorativos no cenário. " +
     "O produto deve ficar centralizado, bem iluminado, nítido, com aparência comercial profissional e sombra suave discreta no chão.",
 
   studio_premium:
@@ -43,7 +54,8 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
     "Para qualquer produto: use composição editorial e aspiracional com espaço negativo intencional, reflexos sutis na superfície e visual de anúncio de marca premium. " +
     "Remova mãos, pessoas, mesa comum, fundo original e qualquer elemento externo desnecessário. " +
     "Preserve com máxima fidelidade o produto principal: formato exato, cor, proporções, textura, material, acabamento, tampa, ornamentos, rótulos, embalagem, câmeras, lentes, sensores, logo/marca existente e todos os detalhes reais. " +
-    "Não altere o design do produto, não mude a cor, não invente partes, não remova elementos reais, não adicione textos, logos inexistentes, pessoas, mãos ou acessórios. " +
+    LABEL_PRESERVATION_RULE + " " +
+    "Não altere o design do produto, não mude a cor, não invente partes, não remova elementos reais, não adicione textos novos, logos inexistentes, pessoas, mãos ou acessórios. " +
     "O produto deve continuar idêntico ao original, apresentado em composição publicitária sofisticada e visualmente impactante.",
 
   // Dedicated preset for fragrance / luxury cosmetics — not yet in UI
@@ -53,7 +65,8 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
     "Composição editorial aspiracional com espaço negativo intencional, como uma campanha de alto orçamento de marca de perfume de luxo europeu. " +
     "Remova completamente mãos, pessoas, mesa comum, fundo original, embalagem externa e qualquer elemento estranho ao produto. " +
     "Preserve com máxima fidelidade o frasco: forma exata, cor do vidro, transparência, tampa, ornamentos, spray ou aplicador, rótulo, nome da marca impresso, acabamento metálico e todos os detalhes reais visíveis. " +
-    "Não redesenhe o frasco, não altere a cor do vidro, não troque a tampa, não invente partes, não remova elementos existentes e não adicione texto, pessoas ou mãos. " +
+    LABEL_PRESERVATION_RULE + " " +
+    "Não redesenhe o frasco, não altere a cor do vidro, não troque a tampa, não invente partes, não remova elementos existentes e não adicione texto novo, pessoas ou mãos. " +
     "O resultado deve parecer uma campanha visual de perfume de altíssimo padrão, com o produto absolutamente fiel ao original.",
 
   lifestyle_context:
@@ -62,7 +75,8 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
     "Remova mãos, pessoas, bagunça e elementos externos da foto original que prejudiquem a apresentação. " +
     "O ambiente deve valorizar o produto sem competir com ele. " +
     "Preserve fielmente formato, cor, proporções, textura, material, acabamento, botões, entradas, rótulos, embalagem, câmeras, lentes, sensores, logo/marca existente e todos os detalhes reais do item. " +
-    "Não altere o modelo, não troque a cor, não invente partes, não remova partes existentes, não adicione texto, logos inexistentes, pessoas, mãos ou acessórios que não existam no produto original. " +
+    LABEL_PRESERVATION_RULE + " " +
+    "Não altere o modelo, não troque a cor, não invente partes, não remova partes existentes, não adicione texto novo no cenário, logos inexistentes, pessoas, mãos ou acessórios que não existam no produto original. " +
     "O produto deve parecer fotografado profissionalmente em um cenário realista e vendável.",
 
   social_ad_clean:
@@ -70,15 +84,17 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
     "Gere uma imagem comercial clean para anúncio digital e redes sociais, com fundo moderno, limpo e visualmente atraente, mantendo o produto centralizado e em destaque. " +
     "Remova mãos, pessoas, mesa, cenário antigo, fundo original e qualquer elemento externo que prejudique a apresentação comercial. " +
     "Preserve exatamente o produto original: formato, cor, proporções, textura, material, acabamento, botões, entradas, rótulos, embalagem, câmeras, sensores, logo/marca existente e partes visíveis. " +
-    "Não altere o produto, não troque cor, não invente elementos, não remova partes reais, não adicione texto, logos inexistentes, pessoas, mãos ou acessórios. " +
-    "A imagem deve parecer profissional, moderna e pronta para divulgação, mas sem qualquer texto.",
+    LABEL_PRESERVATION_RULE + " " +
+    "Não altere o produto, não troque cor, não invente elementos, não remova partes reais, não adicione texto novo no fundo, logos inexistentes, pessoas, mãos ou acessórios. " +
+    "A imagem deve parecer profissional, moderna e pronta para divulgação, sem nenhum texto ou legenda adicionado ao fundo ou cenário.",
 
   closeup_detail:
     "Use a imagem enviada como referência principal e obrigatória do produto. " +
     "Gere uma foto close-up profissional destacando os detalhes reais do produto, como textura, acabamento, material, botões, lentes, rótulo, costura, embalagem, conectores ou partes visíveis. " +
     "Remova mãos, pessoas, bagunça, fundo original e qualquer elemento externo desnecessário. " +
     "Preserve fielmente formato, cor, proporções, design, textura, material, logo/marca existente e características originais. " +
-    "Não altere o modelo, não troque cor, não invente partes, não remova detalhes existentes, não adicione texto, logos inexistentes, pessoas, mãos ou acessórios. " +
+    LABEL_PRESERVATION_RULE + " " +
+    "Não altere o modelo, não troque cor, não invente partes, não remova detalhes existentes, não adicione texto novo, logos inexistentes, pessoas, mãos ou acessórios. " +
     "Use iluminação profissional, nitidez alta, fundo limpo e profundidade de campo suave, mantendo o produto reconhecível e fiel ao original.",
 };
 
@@ -93,7 +109,8 @@ function buildColoredBgPrompt(colorMode: string | null, color: string | null): s
     `Gere uma foto profissional de produto com ${bgSpec}. ` +
     "Remova completamente mãos, braços, pessoas, mesa, cenário, fundo original e qualquer elemento externo da foto original. " +
     "Preserve com máxima fidelidade o formato, cor, proporções, textura, material, acabamento, botões, entradas, rótulos, embalagem, câmeras, lentes, sensores, logo/marca existente e todos os detalhes reais do produto. " +
-    "Não redesenhe o produto, não troque a cor, não altere o modelo, não invente partes novas, não remova partes existentes e não adicione textos, logos, pessoas, mãos, acessórios ou elementos decorativos. " +
+    LABEL_PRESERVATION_RULE + " " +
+    "Não redesenhe o produto, não troque a cor, não altere o modelo, não invente partes novas, não remova partes existentes e não adicione textos novos, logos inexistentes, pessoas, mãos, acessórios ou elementos decorativos no cenário. " +
     "O produto deve ficar centralizado, bem iluminado, nítido, com aparência comercial profissional e sombra suave discreta no chão."
   );
 }
