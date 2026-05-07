@@ -3,13 +3,10 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getStylePrompt, getPresetName } from "@/lib/prompts";
-import { generateProductImage } from "@/services/image.service";
+import { generateProductImage, isMockImageEnabled } from "@/services/image.service";
 import { applyWatermark } from "@/lib/watermark";
 import { buildWatermarkKey, uploadRawToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
-
-const isDev = process.env.NODE_ENV !== "production";
-const isMock = process.env.USE_MOCK_IMAGE === "true" && isDev;
 
 const STYLE_IDS = ["marketplace", "colored-bg", "scene", "premium", "social"] as const;
 
@@ -28,6 +25,9 @@ function isValidUploadKey(key: string, userId: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const isDev = process.env.NODE_ENV !== "production";
+  const isMock = isMockImageEnabled(); // read at request-time, never cached
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });

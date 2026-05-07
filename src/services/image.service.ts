@@ -13,23 +13,21 @@ const MOCK_IMAGE_URLS = [
   "https://picsum.photos/seed/monetify-b/1024/1024",
 ];
 
-function resolveMockFlag(): boolean {
+// Read at runtime per call — never cached at module level.
+// Accepts "true", "TRUE", " true " etc.
+export function isMockImageEnabled(): boolean {
   const isDev = process.env.NODE_ENV !== "production";
-  const raw = process.env.USE_MOCK_IMAGE;
-  const parsed = raw === "true";
+  const enabled = process.env.USE_MOCK_IMAGE?.trim().toLowerCase() === "true";
 
-  if (isDev) {
-    console.log(`[generate] USE_MOCK_IMAGE raw="${raw}" parsed=${parsed}`);
-  }
-
-  if (!isDev && parsed) {
+  if (!isDev && enabled) {
     console.error(
-      "[generate] USE_MOCK_IMAGE=true foi detectado em produção — mock IGNORADO. " +
+      "[generate] USE_MOCK_IMAGE=true detectado em produção — mock IGNORADO. " +
       "Remova essa variável do ambiente de produção."
     );
+    return false;
   }
 
-  return isDev && parsed;
+  return isDev && enabled;
 }
 
 // Returns null when the key is a mock key or S3 credentials are absent (dev fallback)
@@ -64,11 +62,11 @@ export async function generateProductImage(
   orderId: string,
   originalImageKey?: string,
 ): Promise<{ previews: ImagePreview[] }> {
-  const isMock = resolveMockFlag();
+  const isMock = isMockImageEnabled();
   const isDev = process.env.NODE_ENV !== "production";
 
   if (isMock) {
-    console.log("[generate] mock mode — skipping OpenAI + S3");
+    console.log("[generate] USE_MOCK_IMAGE=true -> using mock provider, skipping OpenAI");
 
     const images = await Promise.all(
       MOCK_IMAGE_URLS.map((url) =>
@@ -101,6 +99,7 @@ export async function generateProductImage(
 
   const useImageEdit = originalBuffer !== null;
 
+  console.log("[generate] USE_MOCK_IMAGE=false -> using OpenAI");
   if (isDev) {
     console.log(
       `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit (with reference)" : "images.generate (text-only)"}`,
