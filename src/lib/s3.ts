@@ -32,6 +32,21 @@ export async function uploadToS3(base64: string, key: string): Promise<void> {
   );
 }
 
+export async function uploadRawToS3(
+  buffer: Buffer,
+  key: string,
+  contentType: string
+): Promise<void> {
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    })
+  );
+}
+
 export async function getPresignedUrl(
   key: string,
   expiresIn = 3600

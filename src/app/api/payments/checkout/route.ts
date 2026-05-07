@@ -7,6 +7,7 @@ import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
 
 const schema = z.object({
   prompt: z.string().min(5).max(1000),
+  uploadKey: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt inválido" }, { status: 400 });
   }
 
-  const { prompt } = parsed.data;
+  const { prompt, uploadKey } = parsed.data;
   const userId = session.user.id;
 
   // Create Order in PENDING state before calling AbacatePay
@@ -33,6 +34,7 @@ export async function POST(req: NextRequest) {
       paymentStatus: "PENDING",
       generationStatus: "PENDING",
       prompt,
+      originalImageKey: uploadKey,
     },
   });
 

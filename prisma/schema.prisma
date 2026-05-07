@@ -117,6 +117,9 @@ model Order {
   // Dados do prompt (salvo no checkout, usado pela geração após pagamento)
   prompt           String?
 
+  // Imagem original do produto enviada pelo usuário
+  originalImageKey String?
+
   // PIX — dados da cobrança transparente
   pixBrCode        String?
   pixBrCodeBase64  String?

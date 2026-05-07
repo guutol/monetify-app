@@ -142,8 +142,9 @@ export default function GeneratePage() {
   const [backgroundColor, setBackgroundColor] = useState<ColorId | null>(null);
 
   // UI
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<"uploading" | "checkout" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
 
   // Revoke object URL when preview changes or component unmounts
@@ -157,9 +158,22 @@ export default function GeneratePage() {
   // ── File handlers ─────────────────────────────────────────────────────────
 
   const ACCEPTED = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
   function applyFile(file: File) {
-    if (!ACCEPTED.includes(file.type)) return;
+    setFileError(null);
+    if (!ACCEPTED.includes(file.type)) {
+      setFileError("Formato não suportado. Use PNG, JPG, JPEG ou WEBP.");
+      setSelectedFile(null);
+      setSelectedImagePreview(null);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setFileError("Arquivo muito grande. O tamanho máximo é 10 MB.");
+      setSelectedFile(null);
+      setSelectedImagePreview(null);
+      return;
+    }
     setSelectedFile(file);
     setSelectedImagePreview(URL.createObjectURL(file));
   }
@@ -206,18 +220,42 @@ export default function GeneratePage() {
   async function handleCheckout() {
     setValidationAttempted(true);
     const validationError = getValidationError();
-    if (validationError || isLoading) return;
+    if (validationError || loadingStep !== null) return;
 
-    setIsLoading(true);
     setError(null);
 
-    const prompt = buildPrompt(selectedStyle, backgroundColorMode, backgroundColor);
-
     try {
+      // Step 1: upload original image
+      setLoadingStep("uploading");
+      let uploadKey: string | undefined;
+
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+
+        if (!uploadRes.ok) {
+          setError(uploadData.error ?? "Erro ao enviar imagem. Tente novamente.");
+          return;
+        }
+
+        uploadKey = uploadData.uploadKey as string;
+      }
+
+      // Step 2: create order + PIX charge
+      setLoadingStep("checkout");
+      const prompt = buildPrompt(selectedStyle, backgroundColorMode, backgroundColor);
+
       const res = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, uploadKey }),
       });
 
       const data = await res.json();
@@ -231,7 +269,7 @@ export default function GeneratePage() {
     } catch {
       setError("Erro de conexão. Tente novamente.");
     } finally {
-      setIsLoading(false);
+      setLoadingStep(null);
     }
   }
 
@@ -250,6 +288,7 @@ export default function GeneratePage() {
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const validationError = getValidationError();
+  const isLoading = loadingStep !== null;
   const canSubmit = !validationError && !isLoading;
   const selectedStyleLabel = GENERATION_TYPES.find((t) => t.id === selectedStyle)?.title;
 
@@ -341,6 +380,10 @@ export default function GeneratePage() {
                 </>
               )}
             </div>
+
+            {fileError && (
+              <p className="mt-2 text-xs text-red-400">{fileError}</p>
+            )}
 
             <input
               ref={fileInputRef}
@@ -581,7 +624,7 @@ export default function GeneratePage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Criando cobrança...
+                  {loadingStep === "uploading" ? "Enviando imagem..." : "Criando cobrança..."}
                 </>
               ) : (
                 getButtonLabel()
