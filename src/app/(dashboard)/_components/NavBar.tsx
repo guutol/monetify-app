@@ -9,7 +9,11 @@ const NAV_ITEMS = [
   { href: "/history", label: "Histórico" },
 ];
 
-export function NavBar() {
+interface Props {
+  credits?: number;
+}
+
+export function NavBar({ credits }: Props) {
   const pathname = usePathname();
 
   return (
@@ -39,6 +43,28 @@ export function NavBar() {
               </Link>
             );
           })}
+
+          {/* Divider */}
+          {credits !== undefined && (
+            <div className="mx-1 h-4 w-px bg-zinc-700" />
+          )}
+
+          {/* Credits badge → links to /plans */}
+          {credits !== undefined && (
+            <Link
+              href="/plans"
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold tabular-nums transition-colors sm:px-3 ${
+                credits > 0
+                  ? "text-emerald-400 hover:bg-emerald-500/10"
+                  : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+              }`}
+            >
+              <span>{credits}</span>
+              <span className="hidden sm:inline">
+                {credits === 1 ? " produto" : " disponíveis"}
+              </span>
+            </Link>
+          )}
         </div>
       </div>
     </nav>

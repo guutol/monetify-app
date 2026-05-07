@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { GenerateClient } from "./GenerateClient";
+import { PlansClient } from "./PlansClient";
 
-export default async function GeneratePage() {
+export default async function PlansPage() {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
@@ -14,5 +14,5 @@ export default async function GeneratePage() {
     select: { credits: true },
   });
 
-  return <GenerateClient initialCredits={user?.credits ?? 0} />;
+  return <PlansClient initialCredits={user?.credits ?? 0} />;
 }

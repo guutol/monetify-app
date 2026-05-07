@@ -46,7 +46,7 @@ export default async function DashboardPage() {
 
   const userId = session.user.id;
 
-  const [stats, recentOrders] = await Promise.all([
+  const [stats, recentOrders, userCredits] = await Promise.all([
     prisma.order.groupBy({
       by: ["generationStatus", "paymentStatus"],
       where: { userId },
@@ -68,7 +68,13 @@ export default async function DashboardPage() {
       orderBy: { createdAt: "desc" },
       take: 6,
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { credits: true },
+    }),
   ]);
+
+  const credits = userCredits?.credits ?? 0;
 
   const totalOrders = stats.reduce((sum, s) => sum + s._count.id, 0);
 
@@ -110,6 +116,25 @@ export default async function DashboardPage() {
             className="w-fit shrink-0 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
           >
             Nova imagem
+          </Link>
+        </div>
+
+        {/* Credits banner */}
+        <div className="mb-6 flex min-w-0 items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-zinc-400">Produtos disponíveis</p>
+            <p className="mt-0.5 truncate text-base font-bold text-white tabular-nums">
+              {credits}{" "}
+              <span className="font-normal text-zinc-400 text-sm">
+                {credits === 1 ? "produto" : "produtos"}
+              </span>
+            </p>
+          </div>
+          <Link
+            href="/plans"
+            className="shrink-0 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700 hover:text-white"
+          >
+            Comprar mais
           </Link>
         </div>
 
