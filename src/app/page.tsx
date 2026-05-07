@@ -181,8 +181,8 @@ function Hero() {
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-zinc-400">
-              Com inteligência artificial, você transforma qualquer foto de produto em imagem
-              com qualidade de estúdio — de forma rápida, sem fotógrafo e sem equipamento caro.
+              Envie uma foto do seu produto, escolha o estilo e receba uma prévia grátis com marca
+              d&apos;água. Se gostar, pague R$&nbsp;9,90 via PIX para baixar a imagem limpa.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -190,9 +190,9 @@ function Hero() {
                 href="/generate"
                 className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-emerald-500/50 transition-all"
               >
-                Gerar minha imagem →
+                Testar grátis agora →
               </Link>
-              <span className="text-sm text-zinc-500">R$ 9,90 por imagem · Sem assinatura</span>
+              <span className="text-sm text-zinc-500">Prévia grátis com marca d&apos;água · R$&nbsp;9,90 para liberar · Sem assinatura</span>
             </div>
           </div>
 
