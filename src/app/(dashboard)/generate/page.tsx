@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const GENERATION_TYPES = [
   {
     id: "marketplace",
-    title: "Fundo branco marketplace",
+    title: "Marketplace / fundo branco",
     description:
       "Ideal para Shopee, Mercado Livre e catálogos. Produto centralizado, fundo branco e sombra suave.",
   },
@@ -23,7 +23,7 @@ const GENERATION_TYPES = [
     id: "scene",
     title: "Cenário que combina com o produto",
     description:
-      "A IA cria um fundo profissional que combine com o tipo do produto, mantendo o item como foco.",
+      "A IA cria um fundo profissional de acordo com o tipo do produto, mantendo o item como foco.",
   },
   {
     id: "premium",
@@ -235,6 +235,18 @@ export default function GeneratePage() {
     }
   }
 
+  // ── Button label ──────────────────────────────────────────────────────────
+
+  function getButtonLabel(): string {
+    if (!selectedFile) return "Envie uma imagem para continuar";
+    if (!selectedStyle) return "Escolha um tipo de imagem";
+    if (selectedStyle === "colored-bg") {
+      if (!backgroundColorMode) return "Escolha como será a cor do fundo";
+      if (backgroundColorMode === "specific" && !backgroundColor) return "Escolha uma cor";
+    }
+    return "Continuar por R$ 9,90";
+  }
+
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const validationError = getValidationError();
@@ -270,7 +282,7 @@ export default function GeneratePage() {
         <div className="min-w-0 space-y-5">
 
           {/* Step 1 — Upload */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
             <p className="mb-4 text-sm font-semibold text-zinc-100">
               1. Foto do produto
             </p>
@@ -340,7 +352,7 @@ export default function GeneratePage() {
           </div>
 
           {/* Step 2 — Generation type */}
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
             <p className="mb-4 text-sm font-semibold text-zinc-100">
               2. Tipo de geração
             </p>
@@ -353,7 +365,7 @@ export default function GeneratePage() {
                     type="button"
                     onClick={() => handleStyleSelect(type.id)}
                     className={cn(
-                      "rounded-xl border p-4 text-left transition-all",
+                      "rounded-xl border p-3 sm:p-4 text-left transition-all",
                       isSelected
                         ? "border-emerald-500/50 bg-emerald-500/10 ring-1 ring-emerald-500/20"
                         : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800"
@@ -389,7 +401,7 @@ export default function GeneratePage() {
 
           {/* Step 3 — Color options (only for colored-bg) */}
           {selectedStyle === "colored-bg" && (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
               <p className="mb-4 text-sm font-semibold text-zinc-100">
                 3. Como você quer a cor do fundo?
               </p>
@@ -419,7 +431,7 @@ export default function GeneratePage() {
                         if (opt.mode === "auto") setBackgroundColor(null);
                       }}
                       className={cn(
-                        "rounded-xl border p-4 text-left transition-all",
+                        "rounded-xl border p-3 sm:p-4 text-left transition-all",
                         isSelected
                           ? "border-emerald-500/50 bg-emerald-500/10 ring-1 ring-emerald-500/20"
                           : "border-zinc-700 bg-zinc-800/50 hover:border-zinc-600 hover:bg-zinc-800"
@@ -527,10 +539,8 @@ export default function GeneratePage() {
             {/* Price */}
             <div className="mb-6 flex items-start justify-between">
               <div>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold text-white">R$ 9,90</span>
-                  <span className="text-sm text-zinc-400">por imagem</span>
-                </div>
+                <span className="text-3xl font-bold text-white">R$ 9,90</span>
+                <p className="mt-1 text-xs text-zinc-400">2 prévias geradas • escolha 1 imagem final</p>
                 <p className="mt-0.5 text-xs text-zinc-500">Pagamento único, sem assinatura.</p>
               </div>
               <span className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-400">
@@ -574,7 +584,7 @@ export default function GeneratePage() {
                   Criando cobrança...
                 </>
               ) : (
-                "Continuar por R$ 9,90"
+                getButtonLabel()
               )}
             </button>
 
@@ -622,6 +632,24 @@ export default function GeneratePage() {
                 <path d="m2 12 10 5 10-5" />
               </svg>
               Ideal para Shopee, Mercado Livre, TikTok Shop e Instagram.
+            </p>
+            <p className="flex items-center gap-2 text-xs text-zinc-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              Seu produto é mantido como foco, preservando formato, embalagem e identidade visual.
             </p>
           </div>
         </div>
