@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { createPixCharge } from "@/lib/abacatepay-api";
+import { getPlanById } from "@/config/pricing";
+
+const isDev = process.env.NODE_ENV !== "production";
+
+// "single" é fluxo avulso — não aceito aqui
+const schema = z.object({
+  planId: z.enum(["starter", "seller"]),
+});
+
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+
+  const body = await req.json().catch(() => null);
+  if (isDev) console.log("[checkout/package] body recebido:", JSON.stringify(body));
+
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    if (isDev) console.error("[checkout/package] zod errors:", JSON.stringify(parsed.error.flatten()));
+    return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
+  }
+
+  const { planId } = parsed.data;
+
+  // Amount vem sempre do backend — nunca do frontend
+  const plan = getPlanById(planId);
+  if (!plan) {
+    return NextResponse.json({ error: "Plano não encontrado" }, { status: 400 });
+  }
+
+  const userId = session.user.id;
+
+  if (isDev) {
+    console.log(`[checkout/package] planId=${planId} | amount=${plan.amountCents} | products=${plan.productsCount}`);
+  }
+
+  // Criar Order em estado PENDING antes de chamar AbacatePay
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const order = await prisma.order.create({
+    // `orderType` e `planId` existem no schema mas o cliente ainda não foi
+    // regenerado — rodar `npx prisma generate` remove o cast abaixo
+    data: {
+      userId,
+      amount: plan.amountCents,
+      paymentMethod: "PIX",
+      paymentStatus: "PENDING",
+      generationStatus: "PENDING",
+      orderType: "PACKAGE",
+      planId: plan.planId,
+    } as any,
+  });
+
+  if (isDev) console.log("[checkout/package] Order criada:", order.id);
+
+  try {
+    const pixData = await createPixCharge({
+      amount: plan.amountCents,
+      externalId: order.id,
+    });
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        externalId: pixData.id,
+        pixBrCode: pixData.brCode,
+        pixBrCodeBase64: pixData.brCodeBase64,
+        pixExpiresAt: new Date(pixData.expiresAt),
+      },
+    });
+
+    if (isDev) console.log("[checkout/package] AbacatePay OK, externalId:", pixData.id);
+
+    return NextResponse.json({
+      orderId: order.id,
+      brCode: pixData.brCode,
+      brCodeBase64: pixData.brCodeBase64,
+      expiresAt: pixData.expiresAt,
+      amount: plan.amountCents,
+      planId: plan.planId,
+      planLabel: plan.label,
+      productsCount: plan.productsCount,
+      devMode: pixData.devMode,
+    });
+  } catch (err) {
+    if (isDev) console.error("[checkout/package] AbacatePay error:", err);
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentStatus: "FAILED" },
+    });
+
+    return NextResponse.json({ error: "Erro ao criar cobrança. Tente novamente." }, { status: 502 });
+  }
+}
