@@ -2,6 +2,7 @@ import { toFile } from "openai";
 import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
+import { extractSizeFromPrompt, stripSizeHint } from "@/lib/prompts";
 
 // Configurable via OPENAI_IMAGE_MODEL env — defaults to gpt-image-1.5.
 // Accepted values per SDK v6: gpt-image-1.5, gpt-image-1, gpt-image-1-mini.
@@ -109,6 +110,9 @@ export async function generateProductImage(
 
   // ── Call OpenAI ────────────────────────────────────────────────────────────
 
+  const imageSize = extractSizeFromPrompt(prompt);
+  const cleanPrompt = stripSizeHint(prompt);
+
   let rawResults: { b64_json?: string | null }[];
 
   try {
@@ -120,9 +124,9 @@ export async function generateProductImage(
       const response = await openai.images.edit({
         model: IMAGE_MODEL,
         image: imageFile,
-        prompt: buildEditPrompt(prompt),
+        prompt: buildEditPrompt(cleanPrompt),
         n: 2,
-        size: "1024x1024",
+        size: imageSize,
         quality: "high",
         input_fidelity: "high",
       });
@@ -134,9 +138,9 @@ export async function generateProductImage(
 
       const response = await openai.images.generate({
         model: IMAGE_MODEL,
-        prompt,
+        prompt: cleanPrompt,
         n: 2,
-        size: "1024x1024",
+        size: imageSize,
         quality: "high",
       });
 

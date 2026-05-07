@@ -1,3 +1,25 @@
+// Supported OpenAI image sizes
+export type ImageSize = "1024x1024" | "1024x1536" | "1536x1024";
+
+const DEFAULT_SIZE: ImageSize = "1024x1024";
+
+// Size hint prefix embedded in the prompt string so the image service can
+// determine the correct output dimensions without a separate DB field.
+// Format: "[SIZE:WxH] " at the very beginning of the prompt.
+const SIZE_HINT_RE = /^\[SIZE:(\d+x\d+)\] /;
+
+export function extractSizeFromPrompt(prompt: string): ImageSize {
+  const m = SIZE_HINT_RE.exec(prompt);
+  if (!m) return DEFAULT_SIZE;
+  const candidate = m[1];
+  if (candidate === "1024x1536" || candidate === "1536x1024") return candidate;
+  return DEFAULT_SIZE;
+}
+
+export function stripSizeHint(prompt: string): string {
+  return prompt.replace(SIZE_HINT_RE, "");
+}
+
 // Internal preset IDs — separate from UI style IDs sent by GenerateClient
 export type StylePresetId =
   | "marketplace_white"
@@ -80,13 +102,16 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
     "O produto deve parecer fotografado profissionalmente em um cenário realista e vendável.",
 
   social_ad_clean:
+    "[SIZE:1024x1536] " +
     "Use a imagem enviada como referência principal e obrigatória do produto. " +
-    "Gere uma imagem comercial clean para anúncio digital e redes sociais, com fundo moderno, limpo e visualmente atraente, mantendo o produto centralizado e em destaque. " +
-    "Remova mãos, pessoas, mesa, cenário antigo, fundo original e qualquer elemento externo que prejudique a apresentação comercial. " +
-    "Preserve exatamente o produto original: formato, cor, proporções, textura, material, acabamento, botões, entradas, rótulos, embalagem, câmeras, sensores, logo/marca existente e partes visíveis. " +
+    "Gere uma imagem comercial para redes sociais e anúncios digitais, com composição moderna, chamativa e visualmente atraente. " +
+    "Preserve com máxima fidelidade o produto principal: formato, cor, proporções, textura, material, acabamento, rótulos, logo/marca existente e todos os detalhes reais do item. " +
+    "Não altere o design do produto, não troque a cor, não invente partes novas, não remova partes reais e não adicione pessoas, mãos, acessórios, textos ou logos extras. " +
     LABEL_PRESERVATION_RULE + " " +
-    "Não altere o produto, não troque cor, não invente elementos, não remova partes reais, não adicione texto novo no fundo, logos inexistentes, pessoas, mãos ou acessórios. " +
-    "A imagem deve parecer profissional, moderna e pronta para divulgação, sem nenhum texto ou legenda adicionado ao fundo ou cenário.",
+    "Crie um fundo moderno e publicitário, diferente de um fundo branco simples de catálogo. " +
+    "Use iluminação mais impactante, gradientes suaves, contraste elegante, sombra realista, reflexos sutis e profundidade visual para dar aparência de criativo de anúncio premium para redes sociais. " +
+    "O produto deve ficar em destaque absoluto, com composição limpa e vendável, aparência de anúncio profissional e espaço visual equilibrado. " +
+    "O resultado deve parecer uma peça visual feita para Instagram e tráfego pago, não uma simples foto de marketplace.",
 
   closeup_detail:
     "Use a imagem enviada como referência principal e obrigatória do produto. " +
