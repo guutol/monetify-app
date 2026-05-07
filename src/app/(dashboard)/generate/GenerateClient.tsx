@@ -134,11 +134,12 @@ function Spinner() {
 interface Props {
   initialCredits: number;
   freeTrialUsed: boolean;
+  isLoggedIn: boolean;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export function GenerateClient({ initialCredits, freeTrialUsed }: Props) {
+export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -248,6 +249,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed }: Props) {
   // ── Checkout (fluxo avulso: PIX) ─────────────────────────────────────────
 
   async function handleCheckout() {
+    if (!isLoggedIn) { requireLogin(); return; }
     setValidationAttempted(true);
     const validationError = getValidationError();
     if (validationError || loadingStep !== null) return;
@@ -284,6 +286,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed }: Props) {
   // ── With-credit (usa 1 produto disponível, gera direto) ──────────────────
 
   async function handleWithCredit() {
+    if (!isLoggedIn) { requireLogin(); return; }
     setValidationAttempted(true);
     const validationError = getValidationError();
     if (validationError || loadingStep !== null) return;
@@ -324,6 +327,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed }: Props) {
   // ── Trial (gera grátis com marca d'água) ─────────────────────────────────
 
   async function handleTrial() {
+    if (!isLoggedIn) { requireLogin(); return; }
     setValidationAttempted(true);
     const validationError = getValidationError();
     if (validationError || loadingStep !== null) return;
@@ -364,6 +368,10 @@ export function GenerateClient({ initialCredits, freeTrialUsed }: Props) {
   const canSubmit = !validationError && !isLoading;
   const selectedStyleLabel = GENERATION_TYPES.find((t) => t.id === selectedStyle)?.title;
   const hasCredits = initialCredits > 0;
+
+  function requireLogin() {
+    router.push("/login?callbackUrl=" + encodeURIComponent("/generate"));
+  }
 
   function getLoadingLabel() {
     if (loadingStep === "uploading") return "Enviando imagem...";
