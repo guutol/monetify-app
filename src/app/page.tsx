@@ -185,15 +185,23 @@ function Hero() {
               d&apos;água. Se gostar, pague R$&nbsp;9,90 via PIX para baixar a imagem limpa.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/generate"
                 className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-emerald-500/50 transition-all"
               >
                 Testar grátis agora →
               </Link>
-              <span className="text-sm text-zinc-500">Prévia grátis com marca d&apos;água · R$&nbsp;9,90 para liberar · Sem assinatura</span>
+              <a
+                href="#exemplos"
+                className="inline-flex items-center justify-center rounded-xl border border-zinc-700 px-7 py-3.5 text-base font-semibold text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white"
+              >
+                Ver exemplos
+              </a>
             </div>
+            <p className="mt-4 text-sm text-zinc-600">
+              Sem cartão para testar · Login só na hora de gerar · Prévia com marca d&apos;água
+            </p>
           </div>
 
           {/* Right — product mockup */}
@@ -213,25 +221,25 @@ const STEPS = [
     icon: "📷",
     step: "01",
     title: "Envie a foto do produto",
-    desc: "Use qualquer foto tirada no celular ou câmera. Não precisa ser perfeita.",
+    desc: "Use uma foto simples do item. Pode ser tirada pelo celular, sem equipamento.",
   },
   {
     icon: "🎨",
     step: "02",
     title: "Escolha o estilo",
-    desc: "Fundo branco, ambiente profissional, lifestyle — você define o visual ideal.",
+    desc: "Marketplace, premium, fundo colorido, cenário ou redes sociais — você decide.",
   },
   {
-    icon: "💳",
+    icon: "👁️",
     step: "03",
-    title: "Pague com PIX",
-    desc: "Pagamento rápido e seguro. Só R$ 9,90 por geração, sem assinatura.",
+    title: "Veja a prévia grátis",
+    desc: "Você recebe prévias com marca d'água para avaliar o resultado antes de pagar.",
   },
   {
-    icon: "⬇️",
+    icon: "✅",
     step: "04",
-    title: "Baixe a imagem pronta",
-    desc: "Em poucos instantes sua imagem profissional está pronta para usar em qualquer marketplace.",
+    title: "Libere sem marca",
+    desc: "Gostou? Pague R$ 9,90 para baixar a imagem final sem marca d'água.",
   },
 ];
 
@@ -244,7 +252,7 @@ function HowItWorks() {
             Como funciona
           </h2>
           <p className="mt-3 text-zinc-500">
-            Quatro passos simples. Do celular à imagem profissional.
+            Quatro passos simples. Veja o resultado antes de pagar.
           </p>
         </div>
 
@@ -289,15 +297,15 @@ const SHOWCASE = [
 
 function Showcase() {
   return (
-    <section className="bg-zinc-950 px-4 py-20 sm:px-6">
+    <section id="exemplos" className="bg-zinc-950 px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-5xl">
         <div className="mb-14 text-center">
           <p className="mb-2 text-sm font-semibold text-emerald-400">Resultados reais</p>
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Veja a diferença na prática
+            Veja a diferença entre uma foto comum e uma imagem pronta para anúncio
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-zinc-400">
-            Fotos simples de produtos transformadas em imagens mais limpas, profissionais e prontas para vender.
+            Use suas próprias fotos de produto e gere versões com aparência profissional para marketplace, redes sociais e anúncios.
           </p>
         </div>
 
@@ -363,24 +371,24 @@ function Showcase() {
 
 const BENEFITS = [
   {
-    icon: "✨",
-    title: "Imagens profissionais",
-    desc: "Qualidade de estúdio fotográfico sem sair de casa. Resultado limpo, moderno e atraente para qualquer vitrine digital.",
-  },
-  {
-    icon: "🛡️",
-    title: "Mais confiança para o comprador",
-    desc: "Produtos com foto profissional transmitem credibilidade e geram mais confiança no comprador. A primeira impressão sempre é visual.",
-  },
-  {
     icon: "🏪",
-    title: "Pronto para marketplaces",
-    desc: "Dimensões e qualidade ideais para Shopee, Mercado Livre, TikTok Shop, Instagram e qualquer loja online.",
+    title: "Ideal para marketplaces e redes sociais",
+    desc: "Shopee, Mercado Livre, TikTok Shop, Instagram e qualquer loja online. Imagens no padrão de cada canal.",
+  },
+  {
+    icon: "👁️",
+    title: "Teste o resultado antes de pagar",
+    desc: "Receba prévias com marca d'água e avalie o resultado. Só pague quando gostar — sem risco.",
   },
   {
     icon: "📸",
-    title: "Sem contratar fotógrafo",
-    desc: "Economize centenas de reais por sessão fotográfica. Pague apenas R$ 9,90 por imagem, só quando precisar.",
+    title: "Sem ensaio fotográfico",
+    desc: "Economize centenas de reais por sessão. Pague apenas R$ 9,90 por imagem, só quando precisar.",
+  },
+  {
+    icon: "📦",
+    title: "Pacotes para quem vende com frequência",
+    desc: "De avulso a pacotes de 30 imagens. Quanto mais você gera, menor o custo por imagem.",
   },
 ];
 
@@ -417,51 +425,104 @@ function Benefits() {
 // ─── Preço ────────────────────────────────────────────────────────────────────
 
 function Pricing() {
-  const includes = [
-    "Imagem gerada com IA em qualidade profissional",
-    "Download imediato após a geração",
-    "Pronto para Shopee, Mercado Livre e mais",
-    "Pagamento via PIX — rápido e seguro",
+  const packages = [
+    { qty: 5, price: "R$ 34,90", perUnit: "R$ 6,98/img" },
+    { qty: 15, price: "R$ 79,90", perUnit: "R$ 5,33/img" },
+    { qty: 30, price: "R$ 129,90", perUnit: "R$ 4,33/img" },
   ];
 
   return (
     <section className="bg-zinc-50 px-4 py-20 sm:px-6">
-      <div className="mx-auto max-w-md text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-          Preço simples
-        </h2>
-        <p className="mt-3 text-zinc-500">Sem planos confusos. Pague só pelo que usar.</p>
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-12 text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
+            Teste grátis. Pague só se gostar.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-zinc-500">
+            Gere uma prévia com marca d&apos;água sem cartão. Para baixar sem marca, libere por
+            R$&nbsp;9,90 ou escolha um pacote.
+          </p>
+        </div>
 
-        <div className="mt-10 rounded-2xl border border-emerald-200 bg-white p-8 shadow-md shadow-emerald-500/10">
-          <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-            Sem assinatura obrigatória
-          </span>
-
-          <div className="mt-6">
-            <div className="flex items-end justify-center gap-1">
-              <span className="text-xl font-medium text-zinc-400">R$</span>
-              <span className="text-6xl font-bold tracking-tight text-zinc-900">9</span>
-              <span className="mb-2 text-3xl font-bold text-zinc-900">,90</span>
+        <div className="grid gap-5 lg:grid-cols-2">
+          {/* Free preview card */}
+          <div className="flex flex-col rounded-2xl border border-emerald-200 bg-white p-7 shadow-md shadow-emerald-500/10">
+            <span className="inline-flex w-fit items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Para novos usuários
+            </span>
+            <h3 className="mt-5 text-xl font-bold text-zinc-900">Prévia grátis</h3>
+            <div className="mt-3 flex items-end gap-1">
+              <span className="text-5xl font-bold tracking-tight text-zinc-900">R$&nbsp;0</span>
             </div>
-            <p className="mt-1 text-sm text-zinc-500">por imagem gerada</p>
+            <p className="mt-2 text-sm text-zinc-500">
+              1 prévia com marca d&apos;água para você avaliar o resultado antes de pagar.
+            </p>
+            <ul className="mt-5 space-y-2 text-sm text-zinc-600">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
+                Sem cartão de crédito
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
+                Login só na hora de gerar
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
+                Prévia com marca d&apos;água
+              </li>
+            </ul>
+            <Link
+              href="/generate"
+              className="mt-auto pt-6 flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 hover:bg-emerald-400 transition-all"
+            >
+              Testar grátis
+            </Link>
           </div>
 
-          <ul className="mt-8 space-y-3 text-left text-sm text-zinc-600">
-            {includes.map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
-                {item}
-              </li>
-            ))}
-          </ul>
+          {/* Paid options card */}
+          <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-sm">
+            <span className="inline-flex w-fit items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+              Sem assinatura
+            </span>
+            <h3 className="mt-5 text-xl font-bold text-zinc-900">Imagem sem marca</h3>
+            <div className="mt-3 flex items-end gap-1">
+              <span className="text-xl font-medium text-zinc-400">R$</span>
+              <span className="text-5xl font-bold tracking-tight text-zinc-900">9</span>
+              <span className="mb-1 text-2xl font-bold text-zinc-900">,90</span>
+            </div>
+            <p className="mt-2 text-sm text-zinc-500">
+              Libere o download da imagem final sem marca d&apos;água. Pague só se gostar.
+            </p>
 
-          <Link
-            href="/generate"
-            className="mt-8 flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/40 transition-all"
-          >
-            Gerar minha primeira imagem
-          </Link>
+            <div className="mt-5 border-t border-zinc-100 pt-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+                Pacotes para quem gera mais
+              </p>
+              <ul className="space-y-2">
+                {packages.map((p) => (
+                  <li key={p.qty} className="flex items-center justify-between rounded-xl bg-zinc-50 px-3 py-2 text-sm">
+                    <span className="font-medium text-zinc-700">{p.qty} imagens</span>
+                    <div className="text-right">
+                      <span className="font-bold text-zinc-900">{p.price}</span>
+                      <span className="ml-2 text-xs text-zinc-400">{p.perUnit}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <Link
+              href="/generate"
+              className="mt-auto pt-6 flex items-center justify-center rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50"
+            >
+              Gerar agora
+            </Link>
+          </div>
         </div>
+
+        <p className="mt-6 text-center text-xs text-zinc-400">
+          Pagamento via PIX. Produtos não expiram. Sem assinatura mensal.
+        </p>
       </div>
     </section>
   );
@@ -474,17 +535,18 @@ function FinalCTA() {
     <section className="bg-zinc-950 px-4 py-20 sm:px-6">
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Pronto para vender mais com imagens profissionais?
+          Teste com um produto real antes de pagar
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400">
-          Sem assinatura, sem contrato, sem compromisso. Pague apenas quando precisar gerar.
+          Envie uma foto simples, veja a prévia com marca d&apos;água e pague apenas se quiser baixar sem marca.
         </p>
         <Link
           href="/generate"
           className="mt-8 inline-flex items-center rounded-xl bg-emerald-500 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-500/40 transition-all"
         >
-          Gerar minha imagem →
+          Gerar minha prévia grátis →
         </Link>
+        <p className="mt-4 text-sm text-zinc-600">Sem cartão · Sem assinatura · Prévia com marca d&apos;água</p>
       </div>
     </section>
   );
