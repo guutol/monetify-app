@@ -15,6 +15,10 @@ export function buildGenerationKey(userId: string, imageId: string) {
   return `generations/${userId}/${imageId}/result.png`;
 }
 
+export function buildWatermarkKey(userId: string, imageId: string) {
+  return `generations/${userId}/${imageId}/watermark.png`;
+}
+
 export function buildUploadKey(userId: string, imageId: string) {
   return `uploads/${userId}/${imageId}/original.png`;
 }

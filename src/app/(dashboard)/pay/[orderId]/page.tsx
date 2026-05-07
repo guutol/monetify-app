@@ -33,11 +33,12 @@ export default async function PayPage({
       imageId: true,
       orderType: true,
       planId: true,
+      isTrial: true,
       image: {
         select: { id: true, imageUrl: true, s3Key: true },
       },
       images: {
-        select: { id: true, imageUrl: true, s3Key: true },
+        select: { id: true, imageUrl: true, s3Key: true, watermarkKey: true },
       },
     },
   });
@@ -92,6 +93,22 @@ export default async function PayPage({
     );
   }
 
+  // Watermarked previews for trial orders (shown before payment)
+  let initialWatermarkedPreviews: { imageId: string; imageUrl: string }[] = [];
+  if (order.isTrial && order.paymentStatus !== "PAID" && order.images.length > 0) {
+    initialWatermarkedPreviews = await Promise.all(
+      order.images.map(async (preview) => {
+        let url = preview.imageUrl;
+        if (preview.watermarkKey) {
+          url = await getPresignedUrl(preview.watermarkKey).catch(() => preview.imageUrl);
+        } else if (preview.s3Key) {
+          url = await getPresignedUrl(preview.s3Key).catch(() => preview.imageUrl);
+        }
+        return { imageId: preview.id, imageUrl: url };
+      })
+    );
+  }
+
   const generationLabel = resolveGenerationLabel(order.prompt);
 
   return (
@@ -112,6 +129,8 @@ export default async function PayPage({
       initialImageUrl={initialImageUrl}
       initialImageId={img?.id ?? null}
       initialPreviews={initialPreviews}
+      isTrial={order.isTrial}
+      initialWatermarkedPreviews={initialWatermarkedPreviews}
       isDevEnvironment={process.env.NODE_ENV === "development"}
     />
   );

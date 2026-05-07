@@ -26,10 +26,13 @@ interface Props {
   initialImageUrl: string | null;
   initialImageId: string | null;
   initialPreviews: Preview[];
+  isTrial: boolean;
+  initialWatermarkedPreviews: Preview[];
   isDevEnvironment: boolean;
 }
 
 type Phase =
+  | "trial_previews"
   | "waiting_payment"
   | "paid_ready"
   | "generating"
@@ -43,6 +46,210 @@ function formatAmount(cents: number) {
     style: "currency",
     currency: "BRL",
   });
+}
+
+// ── Trial previews UI ─────────────────────────────────────────────────────────
+
+function TrialPayUI({
+  orderId,
+  watermarkedPreviews,
+  isDevEnvironment,
+  onUnlocked,
+}: {
+  orderId: string;
+  watermarkedPreviews: Preview[];
+  isDevEnvironment: boolean;
+  onUnlocked: (pixBrCode: string, pixBrCodeBase64: string, pixExpiresAt: string | null) => void;
+}) {
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [simulating, setSimulating] = useState(false);
+
+  async function handleUnlock() {
+    setUnlocking(true);
+    setUnlockError(null);
+    try {
+      const res = await fetch("/api/payments/checkout/trial-unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setUnlockError(data.error ?? "Erro ao criar cobrança. Tente novamente.");
+        return;
+      }
+      onUnlocked(data.brCode ?? "", data.brCodeBase64 ?? "", data.expiresAt ?? null);
+    } catch {
+      setUnlockError("Erro de conexão. Tente novamente.");
+    } finally {
+      setUnlocking(false);
+    }
+  }
+
+  async function handleSimulateUnlock() {
+    setSimulating(true);
+    setUnlockError(null);
+    try {
+      // First create the PIX charge, then simulate payment
+      const unlockRes = await fetch("/api/payments/checkout/trial-unlock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!unlockRes.ok) {
+        const d = await unlockRes.json();
+        setUnlockError(d.error ?? "Erro ao criar cobrança");
+        return;
+      }
+      const data = await unlockRes.json();
+      // Simulate paid webhook
+      const simRes = await fetch(`/api/dev/orders/${orderId}/simulate-paid-webhook`, { method: "POST" });
+      if (!simRes.ok) {
+        // Still show PIX if simulation fails
+        onUnlocked(data.brCode ?? "", data.brCodeBase64 ?? "", data.expiresAt ?? null);
+        return;
+      }
+      // Payment simulated: go directly to choosing phase
+      onUnlocked("__PAID__", "", null);
+    } catch {
+      setUnlockError("Erro de conexão.");
+    } finally {
+      setSimulating(false);
+    }
+  }
+
+  return (
+    <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
+      <div className="mx-auto max-w-5xl">
+        <a
+          href="/generate"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Voltar para geração
+        </a>
+
+        <div className="mb-8 mt-6">
+          <p className="text-sm font-semibold text-emerald-400">Monetify</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+            Sua prévia está pronta!
+          </h1>
+          <p className="mt-2 text-sm text-zinc-400">
+            Gostou do resultado? Pague R$ 9,90 para liberar a imagem final sem marca d&apos;água.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
+          {/* Watermarked previews */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {watermarkedPreviews.map((preview, idx) => (
+                <div key={preview.imageId} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+                  <div className="relative">
+                    <Image
+                      src={preview.imageUrl}
+                      alt={`Prévia ${idx + 1}`}
+                      width={512}
+                      height={512}
+                      className="w-full"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="px-4 py-2.5">
+                    <p className="text-xs text-zinc-500">Prévia {idx + 1} de {watermarkedPreviews.length} — com marca d&apos;água</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-center text-xs text-zinc-600">
+              A imagem final liberada não terá marca d&apos;água. Você escolhe 1 das 2 prévias.
+            </p>
+          </div>
+
+          {/* Payment panel */}
+          <div className="flex flex-col gap-4">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Liberar imagem</p>
+
+              <div className="mb-5">
+                <span className="text-3xl font-bold text-white">R$ 9,90</span>
+                <p className="mt-1 text-xs text-zinc-400">Pagamento único via PIX · sem assinatura</p>
+              </div>
+
+              <div className="mb-5 space-y-2.5">
+                {[
+                  "Imagem final sem marca d'água",
+                  "Você escolhe 1 das 2 prévias geradas",
+                  "Download imediato após o pagamento",
+                ].map((text, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-emerald-400">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                    <p className="text-xs text-zinc-400">{text}</p>
+                  </div>
+                ))}
+              </div>
+
+              {unlockError && (
+                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                  {unlockError}
+                </div>
+              )}
+
+              <button
+                onClick={handleUnlock}
+                disabled={unlocking || simulating}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {unlocking ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Criando cobrança...
+                  </>
+                ) : (
+                  "Liberar por R$ 9,90"
+                )}
+              </button>
+
+              {isDevEnvironment && (
+                <div className="mt-4 border-t border-dashed border-amber-500/20 pt-4">
+                  <button
+                    onClick={handleSimulateUnlock}
+                    disabled={unlocking || simulating}
+                    className="w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/15 disabled:opacity-50"
+                  >
+                    {simulating ? "Simulando..." : "Simular desbloqueio (dev)"}
+                  </button>
+                  <p className="mt-1 text-center text-xs text-zinc-600">Apenas em desenvolvimento</p>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">Próximos passos</p>
+              <div className="space-y-3">
+                {["Você paga R$ 9,90 via PIX", "Escolhe 1 das 2 prévias como imagem final", "Baixa a imagem sem marca d'água"].map((text, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">
+                      {i + 1}
+                    </div>
+                    <p className="text-xs text-zinc-400">{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Package order UI (completely separate from the generation flow) ───────────
@@ -417,14 +624,16 @@ export function PayClient({
   packageActivated,
   generationTitle,
   generationDescription,
-  pixBrCode,
-  pixBrCodeBase64,
-  pixExpiresAt,
+  pixBrCode: pixBrCodeProp,
+  pixBrCodeBase64: pixBrCodeBase64Prop,
+  pixExpiresAt: pixExpiresAtProp,
   initialPaymentStatus,
   initialGenerationStatus,
   initialImageUrl,
   initialImageId,
   initialPreviews,
+  isTrial,
+  initialWatermarkedPreviews,
   isDevEnvironment,
 }: Props) {
   // Delegate PACKAGE orders to the dedicated UI
@@ -436,14 +645,15 @@ export function PayClient({
         planLabel={planLabel}
         productsCount={productsCount}
         packageActivated={packageActivated}
-        pixBrCode={pixBrCode}
-        pixBrCodeBase64={pixBrCodeBase64}
-        pixExpiresAt={pixExpiresAt}
+        pixBrCode={pixBrCodeProp}
+        pixBrCodeBase64={pixBrCodeBase64Prop}
+        pixExpiresAt={pixExpiresAtProp}
         initialPaymentStatus={initialPaymentStatus}
         isDevEnvironment={isDevEnvironment}
       />
     );
   }
+
   const [phase, setPhase] = useState<Phase>(() => {
     if (
       initialPaymentStatus === "EXPIRED" ||
@@ -459,10 +669,19 @@ export function PayClient({
       if (initialGenerationStatus === "FAILED") return "failed";
       return "paid_ready";
     }
-    if (pixExpiresAt && new Date(pixExpiresAt).getTime() <= Date.now())
+    // Trial orders with completed generation show watermarked previews before payment
+    if (isTrial && initialGenerationStatus === "COMPLETED" && initialPaymentStatus === "PENDING") {
+      return "trial_previews";
+    }
+    if (pixExpiresAtProp && new Date(pixExpiresAtProp).getTime() <= Date.now())
       return "expired";
     return "waiting_payment";
   });
+
+  // Mutable PIX state — starts from props, updated when trial-unlock creates the charge
+  const [pixBrCode, setPixBrCode] = useState(pixBrCodeProp);
+  const [pixBrCodeBase64, setPixBrCodeBase64] = useState(pixBrCodeBase64Prop);
+  const [pixExpiresAt, setPixExpiresAt] = useState(pixExpiresAtProp);
 
   const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl);
   const [imageId, setImageId] = useState<string | null>(initialImageId);
@@ -483,6 +702,17 @@ export function PayClient({
     }
   }, []);
 
+  function handleTrialUnlocked(brCode: string, brCodeBase64: string, expiresAt: string | null) {
+    if (brCode === "__PAID__") {
+      setPhase("choosing");
+      return;
+    }
+    setPixBrCode(brCode);
+    setPixBrCodeBase64(brCodeBase64);
+    setPixExpiresAt(expiresAt);
+    setPhase("waiting_payment");
+  }
+
   // Poll payment status every 3s while waiting
   useEffect(() => {
     if (phase !== "waiting_payment") return;
@@ -496,9 +726,13 @@ export function PayClient({
 
         if (data.paymentStatus === "PAID") {
           stopPolling();
-          setPhase(
-            data.generationStatus === "COMPLETED" ? "done" : "paid_ready"
-          );
+          if (data.generationStatus === "COMPLETED") {
+            // Trial: previews already generated, go straight to choosing
+            // Standard old flow: generation was triggered externally, show done
+            setPhase(isTrial ? "choosing" : "done");
+          } else {
+            setPhase("paid_ready");
+          }
         } else if (
           data.paymentStatus === "EXPIRED" ||
           data.paymentStatus === "CANCELLED"
@@ -512,7 +746,7 @@ export function PayClient({
     }, 3000);
 
     return stopPolling;
-  }, [phase, orderId, stopPolling]);
+  }, [phase, orderId, stopPolling, isTrial]);
 
   // Schedule local expiry transition when QR has a future expiry
   useEffect(() => {
@@ -619,7 +853,20 @@ export function PayClient({
     }
   }
 
+  // ── Trial previews phase: delegate to full-page TrialPayUI ────────────────
+  if (phase === "trial_previews") {
+    return (
+      <TrialPayUI
+        orderId={orderId}
+        watermarkedPreviews={initialWatermarkedPreviews.length > 0 ? initialWatermarkedPreviews : previews}
+        isDevEnvironment={isDevEnvironment}
+        onUnlocked={handleTrialUnlocked}
+      />
+    );
+  }
+
   const PHASE_TITLE: Record<Phase, string> = {
+    trial_previews: "",
     waiting_payment: "Finalize seu pagamento",
     paid_ready: "Pagamento confirmado!",
     generating: "Gerando suas prévias...",
@@ -630,6 +877,7 @@ export function PayClient({
   };
 
   const PHASE_SUBTITLE: Record<Phase, string> = {
+    trial_previews: "",
     waiting_payment:
       "Após a confirmação do pagamento, sua imagem será gerada automaticamente.",
     paid_ready: "Clique abaixo para gerar suas 2 prévias com IA.",

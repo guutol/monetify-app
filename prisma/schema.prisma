@@ -18,6 +18,7 @@ model User {
   role          UserRole  @default(USER)
   plan          Plan      @default(FREE)
   credits       Int       @default(0)
+  freeTrialUsed Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -68,14 +69,15 @@ model VerificationToken {
 // ─── Product models ────────────────────────────────────────────────────────────
 
 model GeneratedImage {
-  id        String   @id @default(cuid())
-  userId    String
-  orderId   String?
-  prompt    String
-  imageUrl  String
-  s3Key     String?
-  isChosen  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  orderId      String?
+  prompt       String
+  imageUrl     String
+  s3Key        String?
+  watermarkKey String?
+  isChosen     Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   orderChosen Order? @relation("OrderChosenImage")
@@ -139,6 +141,9 @@ model Order {
 
   // Disputa
   disputeStatus DisputeStatus @default(NONE)
+
+  // Trial
+  isTrial Boolean @default(false)
 
   // Admin
   isFlagged      Boolean @default(false)

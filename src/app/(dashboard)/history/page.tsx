@@ -50,21 +50,29 @@ export default async function HistoryPage() {
     redirect("/login");
   }
 
-  // Show all paid orders regardless of generation status so the user
-  // can track failed ones and retry from the /pay page
+  // Show paid orders + active trial orders (generated but not yet paid)
   const orders = await prisma.order.findMany({
     where: {
       userId: session.user.id,
-      paymentStatus: "PAID",
+      OR: [
+        { paymentStatus: "PAID" },
+        { isTrial: true, generationStatus: { in: ["PROCESSING", "COMPLETED", "FAILED"] } },
+      ],
     },
     select: {
       id: true,
       amount: true,
       prompt: true,
       generationStatus: true,
+      paymentStatus: true,
+      isTrial: true,
       createdAt: true,
       image: {
         select: { id: true, imageUrl: true, s3Key: true },
+      },
+      images: {
+        select: { id: true, imageUrl: true, watermarkKey: true },
+        take: 1,
       },
     },
     orderBy: { createdAt: "desc" },
@@ -72,24 +80,35 @@ export default async function HistoryPage() {
 
   const items = await Promise.all(
     orders.map(async (order) => {
-      const img = order.image;
+      const chosenImg = order.image;
+      const firstPreview = order.images[0] ?? null;
+
       let displayUrl: string | null = null;
 
-      if (img?.s3Key) {
-        displayUrl = await getPresignedUrl(img.s3Key).catch(() => null);
-      } else if (img?.imageUrl) {
-        displayUrl = img.imageUrl;
+      if (chosenImg?.s3Key) {
+        displayUrl = await getPresignedUrl(chosenImg.s3Key).catch(() => null);
+      } else if (chosenImg?.imageUrl) {
+        displayUrl = chosenImg.imageUrl;
+      } else if (order.isTrial && order.paymentStatus !== "PAID" && firstPreview) {
+        // Show watermarked preview for unpaid trial orders
+        if (firstPreview.watermarkKey) {
+          displayUrl = await getPresignedUrl(firstPreview.watermarkKey).catch(() => null);
+        } else if (firstPreview.imageUrl) {
+          displayUrl = firstPreview.imageUrl;
+        }
       }
 
       return {
         orderId: order.id,
-        imageId: img?.id ?? null,
+        imageId: chosenImg?.id ?? null,
         displayUrl,
         label: resolveGenerationLabel(order.prompt),
         amount: order.amount,
         generationStatus: order.generationStatus,
+        paymentStatus: order.paymentStatus,
+        isTrial: order.isTrial,
         createdAt: order.createdAt,
-        hasS3: !!img?.s3Key,
+        hasS3: !!chosenImg?.s3Key,
       };
     })
   );
@@ -157,6 +176,7 @@ export default async function HistoryPage() {
               const isCompleted = item.generationStatus === "COMPLETED";
               const isFailed    = item.generationStatus === "FAILED";
               const isProcessing = item.generationStatus === "PROCESSING";
+              const isUnpaidTrial = item.isTrial && item.paymentStatus !== "PAID";
 
               return (
                 <div
@@ -240,46 +260,64 @@ export default async function HistoryPage() {
 
                     <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
                       <span>{formatDate(item.createdAt)}</span>
-                      <span>{formatAmount(item.amount)}</span>
+                      {isUnpaidTrial ? (
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                          Prévia grátis
+                        </span>
+                      ) : (
+                        <span>{formatAmount(item.amount)}</span>
+                      )}
                     </div>
 
                     <div className="mt-3 flex flex-col gap-2">
-                      {/* Download: only for completed images */}
-                      {isCompleted && item.imageId && (
-                        <a
-                          href={`/api/images/${item.imageId}/download`}
-                          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                      {/* Unpaid trial: show unlock CTA */}
+                      {isUnpaidTrial ? (
+                        <Link
+                          href={`/pay/${item.orderId}`}
+                          className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-600"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
-                          </svg>
-                          Baixar imagem
-                        </a>
-                      )}
+                          Liberar por R$ 9,90
+                        </Link>
+                      ) : (
+                        <>
+                          {/* Download: only for completed images */}
+                          {isCompleted && item.imageId && (
+                            <a
+                              href={`/api/images/${item.imageId}/download`}
+                              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                              </svg>
+                              Baixar imagem
+                            </a>
+                          )}
 
-                      {/* Ver resultado / Tentar novamente */}
-                      <Link
-                        href={`/pay/${item.orderId}`}
-                        className={`flex w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
-                          isFailed
-                            ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                            : "border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                        }`}
-                      >
-                        {isFailed ? "Tentar novamente" : "Ver resultado"}
-                      </Link>
+                          {/* Ver resultado / Tentar novamente */}
+                          <Link
+                            href={`/pay/${item.orderId}`}
+                            className={`flex w-full items-center justify-center rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+                              isFailed
+                                ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                                : "border border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                            }`}
+                          >
+                            {isFailed ? "Tentar novamente" : "Ver resultado"}
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

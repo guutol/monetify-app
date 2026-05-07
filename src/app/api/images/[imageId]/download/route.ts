@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { downloadFromS3 } from "@/lib/s3";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ imageId: string }> }
 ) {
   const session = await auth();
@@ -16,11 +16,21 @@ export async function GET(
 
   const image = await prisma.generatedImage.findUnique({
     where: { id: imageId },
-    select: { userId: true, s3Key: true, imageUrl: true },
+    select: {
+      userId: true,
+      s3Key: true,
+      imageUrl: true,
+      orderPrev: { select: { id: true, isTrial: true, paymentStatus: true } },
+    },
   });
 
   if (!image || image.userId !== session.user.id) {
     return new NextResponse("Imagem não encontrada", { status: 404 });
+  }
+
+  // Block download of unpaid trial previews
+  if (image.orderPrev?.isTrial && image.orderPrev.paymentStatus !== "PAID") {
+    return NextResponse.redirect(new URL(`/pay/${image.orderPrev.id}`, req.url), 302);
   }
 
   const disposition = 'attachment; filename="monetify-imagem-final.png"';

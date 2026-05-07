@@ -133,11 +133,12 @@ function Spinner() {
 
 interface Props {
   initialCredits: number;
+  freeTrialUsed: boolean;
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export function GenerateClient({ initialCredits }: Props) {
+export function GenerateClient({ initialCredits, freeTrialUsed }: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -309,6 +310,42 @@ export function GenerateClient({ initialCredits }: Props) {
         } else {
           setError(data.error ?? "Erro ao gerar imagem. Tente novamente.");
         }
+        return;
+      }
+
+      router.push(`/pay/${data.orderId}`);
+    } catch {
+      setError("Erro de conexão. Tente novamente.");
+    } finally {
+      setLoadingStep(null);
+    }
+  }
+
+  // ── Trial (gera grátis com marca d'água) ─────────────────────────────────
+
+  async function handleTrial() {
+    setValidationAttempted(true);
+    const validationError = getValidationError();
+    if (validationError || loadingStep !== null) return;
+
+    setError(null);
+
+    try {
+      const uploadKey = await uploadImage();
+      if (selectedFile && uploadKey === null) return;
+
+      setLoadingStep("generating");
+
+      const res = await fetch("/api/generate/trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedStyle, backgroundColorMode, backgroundColor, uploadKey }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Erro ao gerar imagem. Tente novamente.");
         return;
       }
 
@@ -791,6 +828,32 @@ export function GenerateClient({ initialCredits }: Props) {
                     "Continuar por R$ 9,90"
                   )}
                 </button>
+
+                {/* Trial CTA — only for first-timers */}
+                {!freeTrialUsed && (
+                  <>
+                    <div className="my-3 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-zinc-800" />
+                      <p className="text-xs text-zinc-600">ou</p>
+                      <div className="h-px flex-1 bg-zinc-800" />
+                    </div>
+                    <button
+                      onClick={handleTrial}
+                      disabled={isLoading}
+                      className={cn(
+                        "flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-2.5 text-sm font-medium transition-all",
+                        canSubmit
+                          ? "border-emerald-500/40 text-emerald-400 hover:border-emerald-500/70 hover:bg-emerald-500/5"
+                          : "cursor-not-allowed border-zinc-800 text-zinc-600"
+                      )}
+                    >
+                      Ver prévia grátis com marca d&apos;água
+                    </button>
+                    <p className="mt-1.5 text-center text-[11px] text-zinc-600">
+                      Geração gratuita · pague R$ 9,90 só se gostar
+                    </p>
+                  </>
+                )}
               </>
             )}
 

@@ -11,8 +11,13 @@ export default async function GeneratePage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { credits: true },
+    select: { credits: true, freeTrialUsed: true },
   });
 
-  return <GenerateClient initialCredits={user?.credits ?? 0} />;
+  return (
+    <GenerateClient
+      initialCredits={user?.credits ?? 0}
+      freeTrialUsed={user?.freeTrialUsed ?? false}
+    />
+  );
 }
