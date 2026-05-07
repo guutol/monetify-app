@@ -642,10 +642,7 @@ export function PayClient({
                   />
                 </div>
                 <a
-                  href={imageUrl}
-                  download={`monetify-${imageId ?? orderId}.png`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={imageId ? `/api/images/${imageId}/download` : imageUrl}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
                 >
                   Baixar imagem

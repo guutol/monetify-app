@@ -245,12 +245,9 @@ export default async function HistoryPage() {
 
                     <div className="mt-3 flex flex-col gap-2">
                       {/* Download: only for completed images */}
-                      {isCompleted && item.displayUrl && (
+                      {isCompleted && item.imageId && (
                         <a
-                          href={item.displayUrl}
-                          download={`monetify-${item.imageId ?? item.orderId}.png`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={`/api/images/${item.imageId}/download`}
                           className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
                         >
                           <svg
