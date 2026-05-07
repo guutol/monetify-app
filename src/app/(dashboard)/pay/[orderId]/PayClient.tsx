@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 interface Preview {
@@ -11,6 +12,10 @@ interface Preview {
 interface Props {
   orderId: string;
   amount: number;
+  orderType: string;
+  planLabel: string;
+  productsCount: number;
+  packageActivated: boolean;
   generationTitle: string;
   generationDescription: string;
   pixBrCode: string;
@@ -40,9 +45,376 @@ function formatAmount(cents: number) {
   });
 }
 
+// ── Package order UI (completely separate from the generation flow) ───────────
+
+function PackagePayUI({
+  orderId,
+  amount,
+  planLabel,
+  productsCount,
+  packageActivated: initialPackageActivated,
+  pixBrCode,
+  pixBrCodeBase64,
+  pixExpiresAt,
+  initialPaymentStatus,
+  isDevEnvironment,
+}: {
+  orderId: string;
+  amount: number;
+  planLabel: string;
+  productsCount: number;
+  packageActivated: boolean;
+  pixBrCode: string;
+  pixBrCodeBase64: string;
+  pixExpiresAt: string | null;
+  initialPaymentStatus: string;
+  isDevEnvironment: boolean;
+}) {
+  const router = useRouter();
+  const [isPaid, setIsPaid] = useState(initialPaymentStatus === "PAID");
+  const [packageActivated, setPackageActivated] = useState(initialPackageActivated);
+  const [copied, setCopied] = useState(false);
+  const [simulating, setSimulating] = useState(false);
+  const [simulateError, setSimulateError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Update local state when server re-renders with fresh packageActivated prop
+  useEffect(() => {
+    if (initialPackageActivated && !packageActivated) {
+      setPackageActivated(true);
+    }
+  }, [initialPackageActivated, packageActivated]);
+
+  // Poll payment status every 3s while pending
+  useEffect(() => {
+    if (isPaid) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/payments/status/${orderId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.paymentStatus === "PAID") {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setIsPaid(true);
+          // Refresh server component to get fresh packageActivated value
+          router.refresh();
+        }
+      } catch {
+        // ignore transient errors
+      }
+    }, 3000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [isPaid, orderId, router]);
+
+  // Poll for activation after payment (in case webhook takes a moment)
+  useEffect(() => {
+    if (!isPaid || packageActivated) return;
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [isPaid, packageActivated, router]);
+
+  // Local expiry timer
+  useEffect(() => {
+    if (!pixExpiresAt || isPaid) return;
+    const delay = new Date(pixExpiresAt).getTime() - Date.now();
+    if (delay <= 0) return;
+    const t = setTimeout(() => setIsPaid(false), delay); // keep showing expired state
+    return () => clearTimeout(t);
+  }, [pixExpiresAt, isPaid]);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(pixBrCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard not available
+    }
+  }
+
+  async function handleSimulatePaid() {
+    setSimulating(true);
+    setSimulateError(null);
+    try {
+      const res = await fetch(`/api/dev/orders/${orderId}/mark-paid`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setSimulateError(data.error ?? "Erro ao simular pagamento");
+        return;
+      }
+      setIsPaid(true);
+      router.refresh();
+    } catch {
+      setSimulateError("Erro de conexão.");
+    } finally {
+      setSimulating(false);
+    }
+  }
+
+  // ── PACKAGE PENDING ────────────────────────────────────────────────────────
+  if (!isPaid) {
+    return (
+      <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
+        <div className="mx-auto max-w-5xl">
+          <a
+            href="/plans"
+            className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            Voltar para pacotes
+          </a>
+
+          <div className="mb-8 mt-6">
+            <p className="text-sm font-semibold text-emerald-400">Monetify</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
+              Finalize seu pagamento
+            </h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              Após a confirmação, seus produtos disponíveis são ativados automaticamente.
+            </p>
+          </div>
+
+          {isDevEnvironment && (
+            <div className="mb-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-4">
+              <p className="text-xs font-semibold text-amber-400">Ambiente de teste</p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-300/70">
+                Este pagamento está usando o modo de desenvolvimento. Nenhum PIX real será debitado.
+              </p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
+            <div className="order-2 min-w-0 space-y-5 lg:order-1">
+
+              {/* Package order card */}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Seu pacote</p>
+                <p className="text-sm font-semibold text-zinc-200">{planLabel || "Pacote de produtos"}</p>
+                {productsCount > 0 && (
+                  <p className="mt-1 text-xs text-zinc-500">
+                    +{productsCount} {productsCount === 1 ? "produto disponível" : "produtos disponíveis"} após o pagamento
+                  </p>
+                )}
+                <div className="mt-4 flex items-baseline gap-1.5">
+                  <span className="text-2xl font-bold text-white">{formatAmount(amount)}</span>
+                  <span className="text-sm text-zinc-500">pagamento único</span>
+                </div>
+              </div>
+
+              {/* Steps */}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">O que acontece depois</p>
+                <div className="space-y-4">
+                  {[
+                    "Você finaliza o pagamento",
+                    `Seus ${productsCount > 0 ? productsCount : ""} produtos disponíveis são ativados`,
+                    "Você gera imagens quando quiser, sem pagar de novo",
+                  ].map((text, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">
+                        {i + 1}
+                      </div>
+                      <p className="text-sm text-zinc-400">{text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* PIX panel */}
+            <div className="order-1 min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30 lg:order-2">
+              <p className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">Resumo do pagamento</p>
+
+              <div className="mb-5 flex items-start justify-between">
+                <div>
+                  <span className="text-3xl font-bold text-white">{formatAmount(amount)}</span>
+                  <p className="mt-0.5 text-xs text-zinc-500">Pagamento único, sem assinatura.</p>
+                </div>
+                <span className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-400">PIX</span>
+              </div>
+
+              <div className="mb-4 flex justify-center">
+                {pixBrCodeBase64 ? (
+                  <div className="overflow-hidden rounded-xl border border-zinc-700 bg-white p-2">
+                    <Image src={pixBrCodeBase64} alt="QR Code PIX" width={216} height={216} unoptimized />
+                  </div>
+                ) : (
+                  <div className="flex h-56 w-56 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-800">
+                    <p className="text-xs text-zinc-500">QR Code indisponível</p>
+                  </div>
+                )}
+              </div>
+
+              <p className="mb-3 text-center text-xs text-zinc-400">Escaneie no seu banco ou use o código abaixo</p>
+
+              <button
+                onClick={handleCopy}
+                className="w-full truncate rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-left text-xs font-mono text-zinc-400 transition-colors hover:bg-zinc-700"
+              >
+                {copied ? "✓ Copiado!" : pixBrCode || "Código indisponível"}
+              </button>
+
+              {pixBrCode && (
+                <button
+                  onClick={handleCopy}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                >
+                  {copied ? "Código copiado!" : "Copiar código PIX"}
+                </button>
+              )}
+
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-400">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
+                Aguardando confirmação do pagamento...
+              </div>
+
+              {pixExpiresAt && (
+                <p className="mt-2 text-center text-xs text-zinc-500">
+                  Expira às{" "}
+                  {new Date(pixExpiresAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              )}
+
+              {isDevEnvironment && (
+                <div className="mt-5 border-t border-dashed border-amber-500/20 pt-5">
+                  {simulateError && <p className="mb-2 text-xs text-red-400">{simulateError}</p>}
+                  <button
+                    onClick={handleSimulatePaid}
+                    disabled={simulating}
+                    className="w-full rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-medium text-amber-400 transition-colors hover:bg-amber-500/15 disabled:opacity-50"
+                  >
+                    {simulating ? "Simulando..." : "Simular pagamento aprovado"}
+                  </button>
+                  <p className="mt-1 text-center text-xs text-zinc-600">Apenas em desenvolvimento</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── PACKAGE PAID ──────────────────────────────────────────────────────────
+  return (
+    <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
+      <div className="mx-auto max-w-md">
+        <a
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          Ir para o dashboard
+        </a>
+
+        <div className="mt-8">
+          {packageActivated ? (
+            /* ── Activated ───────────────────────────────────────────────── */
+            <>
+              <div className="mb-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-8 text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-white">Pacote ativado!</h2>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Seus produtos disponíveis já foram adicionados à sua conta.
+                </p>
+                {productsCount > 0 && (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
+                    <span className="text-lg font-bold text-emerald-400">+{productsCount}</span>
+                    <span className="text-sm text-emerald-300">
+                      {productsCount === 1 ? "produto disponível" : "produtos disponíveis"}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <a
+                  href="/generate"
+                  className="flex w-full items-center justify-center rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-colors hover:bg-emerald-600"
+                >
+                  Gerar imagem agora
+                </a>
+                <a
+                  href="/plans"
+                  className="flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                >
+                  Ver pacotes
+                </a>
+              </div>
+            </>
+          ) : (
+            /* ── Pending activation (dev simulation or webhook delay) ────── */
+            <>
+              <div className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+                  </div>
+                </div>
+                <h2 className="text-xl font-bold text-white">Pagamento confirmado</h2>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Estamos ativando seus produtos disponíveis. Isso pode levar alguns instantes.
+                </p>
+
+                {isDevEnvironment && (
+                  <p className="mt-4 text-xs leading-relaxed text-zinc-600">
+                    Este pagamento foi marcado manualmente em desenvolvimento. Os produtos disponíveis
+                    só são adicionados quando o webhook for processado.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <a
+                  href="/dashboard"
+                  className="flex w-full items-center justify-center rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-colors hover:bg-emerald-600"
+                >
+                  Ir para o dashboard
+                </a>
+                <a
+                  href="/plans"
+                  className="flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                >
+                  Ver pacotes
+                </a>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Generation order UI (unchanged) ──────────────────────────────────────────
+
 export function PayClient({
   orderId,
   amount,
+  orderType,
+  planLabel,
+  productsCount,
+  packageActivated,
   generationTitle,
   generationDescription,
   pixBrCode,
@@ -55,6 +427,23 @@ export function PayClient({
   initialPreviews,
   isDevEnvironment,
 }: Props) {
+  // Delegate PACKAGE orders to the dedicated UI
+  if (orderType === "PACKAGE") {
+    return (
+      <PackagePayUI
+        orderId={orderId}
+        amount={amount}
+        planLabel={planLabel}
+        productsCount={productsCount}
+        packageActivated={packageActivated}
+        pixBrCode={pixBrCode}
+        pixBrCodeBase64={pixBrCodeBase64}
+        pixExpiresAt={pixExpiresAt}
+        initialPaymentStatus={initialPaymentStatus}
+        isDevEnvironment={isDevEnvironment}
+      />
+    );
+  }
   const [phase, setPhase] = useState<Phase>(() => {
     if (
       initialPaymentStatus === "EXPIRED" ||

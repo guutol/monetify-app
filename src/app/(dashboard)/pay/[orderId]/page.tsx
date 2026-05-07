@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPresignedUrl } from "@/lib/s3";
 import { resolveGenerationLabel } from "@/lib/generation-labels";
+import { getPlanById, type PlanId } from "@/config/pricing";
 import { PayClient } from "./PayClient";
 
 export default async function PayPage({
@@ -30,6 +31,8 @@ export default async function PayPage({
       pixExpiresAt: true,
       prompt: true,
       imageId: true,
+      orderType: true,
+      planId: true,
       image: {
         select: { id: true, imageUrl: true, s3Key: true },
       },
@@ -41,6 +44,27 @@ export default async function PayPage({
 
   if (!order || order.userId !== session.user.id) {
     notFound();
+  }
+
+  // ── PACKAGE order: resolve plan info + activation status ─────────────────
+  let planLabel = "";
+  let productsCount = 0;
+  let packageActivated = false;
+
+  if (order.orderType === "PACKAGE") {
+    if (order.planId) {
+      const plan = getPlanById(order.planId as PlanId);
+      planLabel = plan?.label ?? "";
+      productsCount = plan?.productsCount ?? 0;
+    }
+
+    if (order.paymentStatus === "PAID") {
+      const creditTx = await prisma.creditTransaction.findFirst({
+        where: { orderId: order.id, type: "PURCHASED" },
+        select: { id: true },
+      });
+      packageActivated = creditTx !== null;
+    }
   }
 
   // Resolve chosen image URL (old flow: imageId set directly; new flow: set after user chooses)
@@ -74,6 +98,10 @@ export default async function PayPage({
     <PayClient
       orderId={order.id}
       amount={order.amount}
+      orderType={order.orderType}
+      planLabel={planLabel}
+      productsCount={productsCount}
+      packageActivated={packageActivated}
       generationTitle={generationLabel.title}
       generationDescription={generationLabel.description}
       pixBrCode={order.pixBrCode ?? ""}
