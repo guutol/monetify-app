@@ -71,7 +71,10 @@ export async function POST(req: NextRequest) {
       orderId
     );
 
-    return NextResponse.json({ previews });
+    // Rename presignedUrl → imageUrl to match the Preview interface in PayClient
+    return NextResponse.json({
+      previews: previews.map((p) => ({ imageUrl: p.presignedUrl, imageId: p.imageId })),
+    });
   } catch (err) {
     if (isDev) console.error("[generate] generation failed:", err);
 
