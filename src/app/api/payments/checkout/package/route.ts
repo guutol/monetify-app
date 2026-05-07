@@ -42,10 +42,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Criar Order em estado PENDING antes de chamar AbacatePay
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const order = await prisma.order.create({
-    // `orderType` e `planId` existem no schema mas o cliente ainda não foi
-    // regenerado — rodar `npx prisma generate` remove o cast abaixo
     data: {
       userId,
       amount: plan.amountCents,
@@ -54,7 +51,7 @@ export async function POST(req: NextRequest) {
       generationStatus: "PENDING",
       orderType: "PACKAGE",
       planId: plan.planId,
-    } as any,
+    },
   });
 
   if (isDev) console.log("[checkout/package] Order criada:", order.id);
