@@ -11,7 +11,8 @@ interface Preview {
 interface Props {
   orderId: string;
   amount: number;
-  prompt: string;
+  generationTitle: string;
+  generationDescription: string;
   pixBrCode: string;
   pixBrCodeBase64: string;
   pixExpiresAt: string | null;
@@ -42,7 +43,8 @@ function formatAmount(cents: number) {
 export function PayClient({
   orderId,
   amount,
-  prompt,
+  generationTitle,
+  generationDescription,
   pixBrCode,
   pixBrCodeBase64,
   pixExpiresAt,
@@ -308,10 +310,9 @@ export function PayClient({
                 <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                   Seu pedido
                 </p>
-                {prompt && (
-                  <p className="line-clamp-3 break-words text-sm leading-relaxed text-zinc-300">
-                    &ldquo;{prompt}&rdquo;
-                  </p>
+                <p className="text-sm font-semibold text-zinc-200">{generationTitle}</p>
+                {generationDescription && (
+                  <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{generationDescription}</p>
                 )}
                 <div className="mt-4 flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold text-white">

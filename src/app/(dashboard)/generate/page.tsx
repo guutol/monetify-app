@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { getStylePrompt } from "@/lib/prompts";
 
 // ── Generation types ──────────────────────────────────────────────────────────
 
@@ -58,30 +59,6 @@ const BG_COLORS = [
 
 type ColorId = (typeof BG_COLORS)[number]["id"];
 
-// ── Internal prompt builder (not shown to user) ───────────────────────────────
-
-function buildPrompt(
-  style: StyleId | null,
-  colorMode: "auto" | "specific" | null,
-  color: ColorId | null
-): string {
-  switch (style) {
-    case "marketplace":
-      return "produto com fundo branco limpo, centralizado, sombra suave, estilo profissional para marketplace";
-    case "colored-bg":
-      if (colorMode === "specific" && color)
-        return `produto com fundo ${color.toLowerCase()}, cor lisa e limpa, produto em destaque`;
-      return "produto com fundo colorido escolhido pela IA que combine com o produto, cor harmoniosa";
-    case "scene":
-      return "produto com cenário de fundo profissional que combine com o tipo do produto, fundo contextual, produto em destaque";
-    case "premium":
-      return "produto com iluminação sofisticada, visual elegante e premium, aparência de marca de alto padrão";
-    case "social":
-      return "produto com visual chamativo para redes sociais, Instagram e TikTok Shop, dinâmico e atraente";
-    default:
-      return "";
-  }
-}
 
 // ── Checkmark icon ────────────────────────────────────────────────────────────
 
@@ -250,7 +227,7 @@ export default function GeneratePage() {
 
       // Step 2: create order + PIX charge
       setLoadingStep("checkout");
-      const prompt = buildPrompt(selectedStyle, backgroundColorMode, backgroundColor);
+      const prompt = getStylePrompt(selectedStyle, backgroundColorMode, backgroundColor);
 
       const res = await fetch("/api/payments/checkout", {
         method: "POST",

@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPresignedUrl } from "@/lib/s3";
+import { resolveGenerationLabel } from "@/lib/generation-labels";
 import { PayClient } from "./PayClient";
 
 export default async function PayPage({
@@ -67,11 +68,14 @@ export default async function PayPage({
     );
   }
 
+  const generationLabel = resolveGenerationLabel(order.prompt);
+
   return (
     <PayClient
       orderId={order.id}
       amount={order.amount}
-      prompt={order.prompt ?? ""}
+      generationTitle={generationLabel.title}
+      generationDescription={generationLabel.description}
       pixBrCode={order.pixBrCode ?? ""}
       pixBrCodeBase64={order.pixBrCodeBase64 ?? ""}
       pixExpiresAt={order.pixExpiresAt?.toISOString() ?? null}

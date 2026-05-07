@@ -4,6 +4,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPresignedUrl } from "@/lib/s3";
+import { resolveGenerationLabel } from "@/lib/generation-labels";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("pt-BR", {
@@ -84,7 +85,7 @@ export default async function HistoryPage() {
         orderId: order.id,
         imageId: img?.id ?? null,
         displayUrl,
-        prompt: order.prompt,
+        label: resolveGenerationLabel(order.prompt),
         amount: order.amount,
         generationStatus: order.generationStatus,
         createdAt: order.createdAt,
@@ -167,7 +168,7 @@ export default async function HistoryPage() {
                     {isCompleted && item.displayUrl ? (
                       <Image
                         src={item.displayUrl}
-                        alt={item.prompt ?? "Imagem gerada"}
+                        alt={item.label.title}
                         fill
                         className="object-cover"
                         unoptimized={!item.hasS3}
@@ -224,14 +225,16 @@ export default async function HistoryPage() {
                   {/* Card body */}
                   <div className="p-4">
                     <div className="flex items-start gap-2">
-                      {item.prompt && (
-                        <p
-                          className="line-clamp-2 min-w-0 flex-1 break-words text-sm leading-relaxed text-zinc-300"
-                          title={item.prompt}
-                        >
-                          {item.prompt}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-zinc-200">
+                          {item.label.title}
                         </p>
-                      )}
+                        {item.label.description && (
+                          <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-zinc-500">
+                            {item.label.description}
+                          </p>
+                        )}
+                      </div>
                       <StatusBadge status={item.generationStatus} />
                     </div>
 
