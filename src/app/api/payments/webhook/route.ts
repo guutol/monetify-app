@@ -1,6 +1,74 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyWebhookUrlSecret, verifyAbacatePaySignature } from "@/lib/abacatepay";
+import { getPlanById, PlanId } from "@/config/pricing";
+
+const isDev = process.env.NODE_ENV !== "production";
+
+// ── Lógica de crédito para Order PACKAGE ─────────────────────────────────────
+
+async function handlePackagePayment(
+  orderId: string,
+  planId: string | null,
+  userId: string,
+  rawWebhookData: object,
+): Promise<void> {
+  if (!planId) {
+    throw new Error(`[webhook] PACKAGE order ${orderId} sem planId`);
+  }
+
+  const plan = getPlanById(planId as PlanId);
+  if (!plan || plan.planId === "single") {
+    throw new Error(`[webhook] planId inválido para PACKAGE order ${orderId}: "${planId}"`);
+  }
+
+  const { productsCount } = plan;
+
+  if (isDev) {
+    console.log(`[webhook] PACKAGE planId=${planId} | productsCount=${productsCount} | userId=${userId}`);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Idempotência: não duplicar créditos se webhook chegar mais de uma vez
+    const alreadyCredited = await tx.creditTransaction.findFirst({
+      where: { orderId, type: "PURCHASED" },
+      select: { id: true },
+    });
+
+    if (alreadyCredited) {
+      if (isDev) console.log("[webhook] PACKAGE já creditado — garantindo PAID sem duplicar créditos, orderId:", orderId);
+      await tx.order.update({
+        where: { id: orderId },
+        data: { paymentStatus: "PAID", rawWebhookData },
+      });
+      return;
+    }
+
+    // Primeira entrega: marcar PAID + incrementar créditos + registrar transação
+    await tx.order.update({
+      where: { id: orderId },
+      data: { paymentStatus: "PAID", rawWebhookData },
+    });
+
+    await tx.user.update({
+      where: { id: userId },
+      data: { credits: { increment: productsCount } },
+    });
+
+    await tx.creditTransaction.create({
+      data: {
+        userId,
+        type: "PURCHASED",
+        amount: productsCount,
+        orderId,
+      },
+    });
+
+    if (isDev) {
+      console.log(`[webhook] PACKAGE creditado: +${productsCount} produtos disponíveis para userId=${userId}`);
+    }
+  });
+}
 
 // AbacatePay webhook payload types (v2)
 interface AbacatePayWebhookPayload {
@@ -101,13 +169,19 @@ export async function POST(req: NextRequest) {
     // Extrai externalId de acordo com o prefixo do evento
     const externalId = resolveExternalId(event, data);
     let orderId: string | null = null;
+    let orderType: string | null = null;
+    let orderPlanId: string | null = null;
+    let orderUserId: string | null = null;
 
     if (externalId) {
       const order = await prisma.order.findUnique({
         where: { externalId },
-        select: { id: true },
+        select: { id: true, orderType: true, planId: true, userId: true },
       });
       orderId = order?.id ?? null;
+      orderType = (order as any)?.orderType ?? null;
+      orderPlanId = (order as any)?.planId ?? null;
+      orderUserId = order?.userId ?? null;
     }
 
     // Eventos que necessitam de uma Order: falhar com erro claro se não encontrada
@@ -131,13 +205,17 @@ export async function POST(req: NextRequest) {
     switch (event) {
       case "checkout.completed":
       case "transparent.completed": {
-        await prisma.order.update({
-          where: { id: orderId! },
-          data: {
-            paymentStatus: "PAID",
-            rawWebhookData: payload as object,
-          },
-        });
+        if (orderType === "PACKAGE") {
+          await handlePackagePayment(orderId!, orderPlanId, orderUserId!, payload as object);
+        } else {
+          await prisma.order.update({
+            where: { id: orderId! },
+            data: {
+              paymentStatus: "PAID",
+              rawWebhookData: payload as object,
+            },
+          });
+        }
         break;
       }
 
