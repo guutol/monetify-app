@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { uploadRawToS3 } from "@/lib/s3";
+import { uploadRawToS3, getPresignedUrl } from "@/lib/s3";
 
 const ACCEPTED: Record<string, string> = {
   "image/png":  "png",
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   if (useMock()) {
     const mockKey = `mock/${key}`;
     if (isDev) console.log("[upload] mock mode — key:", mockKey);
-    return NextResponse.json({ uploadKey: mockKey });
+    return NextResponse.json({ uploadKey: mockKey, previewUrl: null });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -75,5 +75,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ uploadKey: key });
+  // Presigned URL válida por 15 min — suficiente para mostrar preview temporário
+  const previewUrl = await getPresignedUrl(key, 900).catch(() => null);
+
+  return NextResponse.json({ uploadKey: key, previewUrl });
 }

@@ -15,6 +15,13 @@ const schema = z.object({
   uploadKey: z.string().nullish(),
 });
 
+function isValidUploadKey(key: string, userId: string): boolean {
+  return (
+    key.startsWith(`uploads/${userId}/`) ||
+    key.startsWith(`mock/uploads/${userId}/`)
+  );
+}
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -31,6 +38,10 @@ export async function POST(req: NextRequest) {
 
   const { selectedStyle, backgroundColorMode, backgroundColor, uploadKey } = parsed.data;
   const userId = session.user.id;
+
+  if (uploadKey && !isValidUploadKey(uploadKey, userId)) {
+    return NextResponse.json({ error: "uploadKey inválido" }, { status: 422 });
+  }
 
   console.log("[checkout] selectedStyle:", selectedStyle, "| colorMode:", backgroundColorMode, "| color:", backgroundColor);
 
