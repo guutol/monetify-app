@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { getStylePrompt } from "@/lib/prompts";
+import { getStylePrompt, getPresetName } from "@/lib/prompts";
 import { generateProductImage } from "@/services/image.service";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Estilo de geração inválido" }, { status: 400 });
   }
 
-  if (isDev) console.log(`[with-credit] userId=${userId} style=${selectedStyle} prompt.length=${prompt.length}`);
+  if (isDev) console.log(`[with-credit] userId=${userId} style=${selectedStyle} preset=${getPresetName(selectedStyle)} prompt.length=${prompt.length}`);
 
   // ── Debit credit + create Order + CreditTransaction atomically ────────────
   let order: { id: string };

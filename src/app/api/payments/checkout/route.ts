@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { createPixCharge } from "@/lib/abacatepay-api";
 import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
-import { getStylePrompt } from "@/lib/prompts";
+import { getStylePrompt, getPresetName } from "@/lib/prompts";
 
 const STYLE_IDS = ["marketplace", "colored-bg", "scene", "premium", "social"] as const;
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "uploadKey inválido" }, { status: 422 });
   }
 
-  console.log("[checkout] selectedStyle:", selectedStyle, "| colorMode:", backgroundColorMode, "| color:", backgroundColor);
+  console.log("[checkout] selectedStyle:", selectedStyle, "| preset:", getPresetName(selectedStyle), "| colorMode:", backgroundColorMode, "| color:", backgroundColor);
 
   const prompt = getStylePrompt(selectedStyle, backgroundColorMode ?? null, backgroundColor ?? null);
 
