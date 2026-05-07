@@ -3,6 +3,11 @@ import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
 
+// Configurable via OPENAI_IMAGE_MODEL env — defaults to gpt-image-1.5.
+// Accepted values per SDK v6: gpt-image-1.5, gpt-image-1, gpt-image-1-mini.
+// Note: input_fidelity is NOT supported on gpt-image-1-mini.
+const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
+
 const MOCK_IMAGE_URLS = [
   "https://picsum.photos/seed/monetify-a/1024/1024",
   "https://picsum.photos/seed/monetify-b/1024/1024",
@@ -101,7 +106,7 @@ export async function generateProductImage(
 
   if (isDev) {
     console.log(
-      `[generate] mode=${useImageEdit ? "images.edit (with reference)" : "images.generate (text-only)"}`,
+      `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit (with reference)" : "images.generate (text-only)"}`,
       originalImageKey ? `key=${originalImageKey}` : "(no key)"
     );
   }
@@ -112,11 +117,12 @@ export async function generateProductImage(
 
   try {
     if (useImageEdit) {
-      // images.edit: use the original product image as visual reference
+      // images.edit: use the original product image as visual reference.
+      // input_fidelity is supported on gpt-image-1 and gpt-image-1.5+, not on gpt-image-1-mini.
       const imageFile = await toFile(originalBuffer, "product.png", { type: "image/png" });
 
       const response = await openai.images.edit({
-        model: "gpt-image-1",
+        model: IMAGE_MODEL,
         image: imageFile,
         prompt: buildEditPrompt(prompt),
         n: 2,
@@ -127,11 +133,11 @@ export async function generateProductImage(
 
       rawResults = response.data ?? [];
     } else {
-      // images.generate: text-only fallback (pedidos antigos ou mock key)
+      // images.generate: text-only fallback (pedidos antigos ou sem imagem de referência)
       if (isDev) console.log("[generate] calling OpenAI images.generate (n=2)...");
 
       const response = await openai.images.generate({
-        model: "gpt-image-1",
+        model: IMAGE_MODEL,
         prompt,
         n: 2,
         size: "1024x1024",
