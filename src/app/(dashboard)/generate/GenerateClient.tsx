@@ -12,31 +12,41 @@ const GENERATION_TYPES = [
     id: "marketplace",
     title: "Marketplace / fundo branco",
     description:
-      "Ideal para Shopee, Mercado Livre e catálogos. Produto centralizado, fundo branco e sombra suave.",
+      "Ideal para imagem principal de anúncio em Shopee, Mercado Livre, Amazon, TikTok Shop, catálogo e loja virtual.",
+    recommended:
+      "Eletrônicos, acessórios, caixas, perfumes, cosméticos, produtos com embalagem e itens em geral.",
   },
   {
     id: "colored-bg",
     title: "Fundo colorido",
     description:
-      "Escolha uma cor específica ou deixe a IA selecionar uma cor que combine com o produto.",
+      "Ideal para destacar o produto com uma cor de fundo mais chamativa, mantendo visual limpo.",
+    recommended:
+      "Cosméticos, acessórios, copos, garrafas, itens pequenos, produtos de beleza e produtos com identidade visual forte.",
   },
   {
     id: "scene",
     title: "Cenário que combina com o produto",
     description:
-      "A IA cria um fundo profissional de acordo com o tipo do produto, mantendo o item como foco.",
+      "Ideal para mostrar o produto em um ambiente de uso realista e mais vendedor.",
+    recommended:
+      "Perfumes, controles gamer, fones, garrafas, skincare, café, decoração, produtos fitness e itens de lifestyle.",
   },
   {
     id: "premium",
     title: "Estilo premium",
     description:
-      "Visual mais elegante, com iluminação sofisticada e aparência de marca.",
+      "Ideal para criar uma imagem com aparência mais sofisticada, elegante e de alto valor.",
+    recommended:
+      "Perfumes, relógios, joias, óculos, cosméticos premium, bebidas, acessórios e produtos com embalagem bonita.",
   },
   {
     id: "social",
     title: "Redes sociais",
     description:
-      "Imagem mais chamativa para Instagram, TikTok Shop, stories e anúncios.",
+      "Ideal para anúncios, Instagram, TikTok Shop e criativos de tráfego pago, sem adicionar texto na imagem.",
+    recommended:
+      "Produtos chamativos, lançamentos, promoções, cosméticos, acessórios, eletrônicos e itens de venda rápida.",
   },
 ] as const;
 
@@ -428,8 +438,14 @@ export function GenerateClient({ initialCredits }: Props) {
 
           {/* Step 2 — Generation type */}
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-6">
-            <p className="mb-4 text-sm font-semibold text-zinc-100">
+            <p className="mb-1.5 text-sm font-semibold text-zinc-100">
               2. Tipo de geração
+            </p>
+            <p className="mb-4 text-xs leading-relaxed text-zinc-500">
+              Não sabe qual escolher?{" "}
+              <span className="font-medium text-zinc-400">Marketplace</span> para a imagem principal do anúncio.{" "}
+              <span className="font-medium text-zinc-400">Premium</span> ou{" "}
+              <span className="font-medium text-zinc-400">Cenário</span> para imagens extras que geram mais desejo.
             </p>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {GENERATION_TYPES.map((type) => {
@@ -467,6 +483,10 @@ export function GenerateClient({ initialCredits }: Props) {
                     </div>
                     <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
                       {type.description}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+                      <span className="text-zinc-500">Para: </span>
+                      {type.recommended}
                     </p>
                   </button>
                 );
