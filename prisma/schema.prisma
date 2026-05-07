@@ -17,15 +17,16 @@ model User {
   image         String?
   role          UserRole  @default(USER)
   plan          Plan      @default(FREE)
-  credits       Int       @default(3)
+  credits       Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts     Account[]
-  sessions     Session[]
-  images       GeneratedImage[]
-  subscription Subscription?
-  orders       Order[]
+  accounts           Account[]
+  sessions           Session[]
+  images             GeneratedImage[]
+  subscription       Subscription?
+  orders             Order[]
+  creditTransactions CreditTransaction[]
 }
 
 model Account {
@@ -114,6 +115,10 @@ model Order {
   images           GeneratedImage[] @relation("OrderPreviews")
   generationStatus GenerationStatus @default(PENDING)
 
+  // Tipo e plano do pedido
+  orderType        OrderType @default(GENERATION)
+  planId           String?
+
   // Dados do prompt (salvo no checkout, usado pela geração após pagamento)
   prompt           String?
 
@@ -156,6 +161,16 @@ model RefundDecision {
   createdAt DateTime    @default(now())
 }
 
+model CreditTransaction {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      CreditTransactionType
+  amount    Int
+  orderId   String?
+  createdAt DateTime              @default(now())
+}
+
 model WebhookEvent {
   id          String   @id
   event       String
@@ -170,6 +185,16 @@ model WebhookEvent {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum OrderType {
+  GENERATION
+  PACKAGE
+}
+
+enum CreditTransactionType {
+  PURCHASED
+  CONSUMED
 }
 
 enum Plan {
