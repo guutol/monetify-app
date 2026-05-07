@@ -179,8 +179,8 @@ export async function POST(req: NextRequest) {
         select: { id: true, orderType: true, planId: true, userId: true },
       });
       orderId = order?.id ?? null;
-      orderType = (order as any)?.orderType ?? null;
-      orderPlanId = (order as any)?.planId ?? null;
+      orderType = order?.orderType ?? null;
+      orderPlanId = order?.planId ?? null;
       orderUserId = order?.userId ?? null;
     }
 
