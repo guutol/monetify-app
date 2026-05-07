@@ -2,7 +2,7 @@ import { toFile } from "openai";
 import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
-import { extractSizeFromPrompt, stripSizeHint } from "@/lib/prompts";
+import { extractSizeFromPrompt, stripSizeHint, detectStyleAndPreset } from "@/lib/prompts";
 
 // Configurable via OPENAI_IMAGE_MODEL env — defaults to gpt-image-1.5.
 // Accepted values per SDK v6: gpt-image-1.5, gpt-image-1, gpt-image-1-mini.
@@ -66,6 +66,18 @@ export async function generateProductImage(
   const isMock = isMockImageEnabled();
   const isDev = process.env.NODE_ENV !== "production";
 
+  // Extract size hint before mock check so the log is always visible in dev.
+  const imageSize = extractSizeFromPrompt(prompt);
+  const cleanPrompt = stripSizeHint(prompt);
+
+  if (isDev) {
+    const [w, h] = imageSize.split("x").map(Number);
+    const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+    const g = gcd(w, h);
+    const { style, preset } = detectStyleAndPreset(prompt);
+    console.log(`[generate] style=${style} preset=${preset} size=${imageSize} aspectRatio=${w / g}:${h / g}`);
+  }
+
   if (isMock) {
     console.log("[generate] USE_MOCK_IMAGE=true -> using mock provider, skipping OpenAI");
 
@@ -109,9 +121,6 @@ export async function generateProductImage(
   }
 
   // ── Call OpenAI ────────────────────────────────────────────────────────────
-
-  const imageSize = extractSizeFromPrompt(prompt);
-  const cleanPrompt = stripSizeHint(prompt);
 
   let rawResults: { b64_json?: string | null }[];
 

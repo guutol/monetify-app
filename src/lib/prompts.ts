@@ -20,6 +20,27 @@ export function stripSizeHint(prompt: string): string {
   return prompt.replace(SIZE_HINT_RE, "");
 }
 
+// For dev logging only — detects style and preset from distinctive substrings
+// in the stored prompt, without requiring a separate DB field.
+export function detectStyleAndPreset(prompt: string): { style: string; preset: string } {
+  const clean = stripSizeHint(prompt);
+  if (clean.includes("foto profissional de marketplace com fundo branco limpo"))
+    return { style: "marketplace", preset: "marketplace_white" };
+  if (clean.includes("foto publicitária premium de estúdio"))
+    return { style: "premium", preset: "studio_premium" };
+  if (clean.includes("foto lifestyle comercial"))
+    return { style: "scene", preset: "lifestyle_context" };
+  if (clean.includes("imagem comercial para redes sociais e anúncios digitais"))
+    return { style: "social", preset: "social_ad_clean" };
+  if (clean.includes("foto close-up profissional"))
+    return { style: "closeup", preset: "closeup_detail" };
+  if (clean.includes("campanha publicitária de luxo para perfume"))
+    return { style: "perfume_premium", preset: "perfume_premium" };
+  if (clean.includes("fundo de cor"))
+    return { style: "colored-bg", preset: "colored_bg" };
+  return { style: "unknown", preset: "unknown" };
+}
+
 // Internal preset IDs — separate from UI style IDs sent by GenerateClient
 export type StylePresetId =
   | "marketplace_white"
