@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { getStylePrompt } from "@/lib/prompts";
 
 // ── Generation types ──────────────────────────────────────────────────────────
 
@@ -227,12 +226,11 @@ export default function GeneratePage() {
 
       // Step 2: create order + PIX charge
       setLoadingStep("checkout");
-      const prompt = getStylePrompt(selectedStyle, backgroundColorMode, backgroundColor);
 
       const res = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, uploadKey }),
+        body: JSON.stringify({ selectedStyle, backgroundColorMode, backgroundColor, uploadKey }),
       });
 
       const data = await res.json();
