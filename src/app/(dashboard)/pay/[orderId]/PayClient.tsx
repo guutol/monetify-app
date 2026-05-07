@@ -353,7 +353,7 @@ function PackagePayUI({
     setSimulating(true);
     setSimulateError(null);
     try {
-      const res = await fetch(`/api/dev/orders/${orderId}/mark-paid`, { method: "POST" });
+      const res = await fetch(`/api/dev/orders/${orderId}/simulate-paid-webhook`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) {
         setSimulateError(data.error ?? "Erro ao simular pagamento");

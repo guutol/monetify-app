@@ -367,7 +367,9 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   const isLoading = loadingStep !== null;
   const canSubmit = !validationError && !isLoading;
   const selectedStyleLabel = GENERATION_TYPES.find((t) => t.id === selectedStyle)?.title;
-  const hasCredits = initialCredits > 0;
+  const hasCredits = isLoggedIn && initialCredits > 0;
+  const canUseTrial = isLoggedIn && !freeTrialUsed;
+  const canShowTrialCTA = !isLoggedIn || !freeTrialUsed;
 
   function requireLogin() {
     router.push("/login?callbackUrl=" + encodeURIComponent("/generate"));
@@ -759,107 +761,188 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
                 </div>
               </>
             ) : (
-              /* ── No credits: standard flow ──────────────────────────── */
+              /* ── No credits ──────────────────────────────────────────── */
               <>
-                {/* No credits notice */}
-                <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-800/50 px-3 py-2.5">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="shrink-0 text-zinc-500"
-                  >
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 0 1-8 0" />
-                  </svg>
-                  <p className="min-w-0 text-xs text-zinc-400">
-                    Você não tem produtos disponíveis.{" "}
-                    <Link
-                      href="/plans"
-                      className="text-emerald-400 underline-offset-2 hover:underline"
+                {/* Context-aware notice */}
+                {isLoggedIn && canUseTrial ? (
+                  <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="shrink-0 text-emerald-400"
                     >
-                      Ver pacotes
-                    </Link>
-                  </p>
-                </div>
-
-                {/* Price */}
-                <div className="mb-5 flex items-start justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-white">R$ 9,90</span>
-                    <p className="mt-1 text-xs text-zinc-400">
-                      2 prévias geradas • escolha 1 imagem final
-                    </p>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      Pagamento único, sem assinatura.
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="m9 12 2 2 4-4" />
+                    </svg>
+                    <p className="min-w-0 text-xs text-zinc-300">
+                      Você ainda tem{" "}
+                      <span className="font-bold text-emerald-400">1 prévia grátis</span>{" "}
+                      disponível
                     </p>
                   </div>
-                  <span className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-400">
-                    PIX
-                  </span>
-                </div>
+                ) : isLoggedIn ? (
+                  <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-800/50 px-3 py-2.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="shrink-0 text-zinc-500"
+                    >
+                      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
+                    </svg>
+                    <p className="min-w-0 text-xs text-zinc-400">
+                      Você não tem produtos disponíveis.{" "}
+                      <Link
+                        href="/plans"
+                        className="text-emerald-400 underline-offset-2 hover:underline"
+                      >
+                        Ver pacotes
+                      </Link>
+                    </p>
+                  </div>
+                ) : null}
+
+                {/* Price — only when trial is not the primary path */}
+                {!canShowTrialCTA && (
+                  <div className="mb-5 flex items-start justify-between">
+                    <div>
+                      <span className="text-3xl font-bold text-white">R$ 9,90</span>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        2 prévias geradas • escolha 1 imagem final
+                      </p>
+                      <p className="mt-0.5 text-xs text-zinc-500">
+                        Pagamento único, sem assinatura.
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-zinc-700 bg-zinc-800 px-3 py-1 text-xs font-semibold text-zinc-400">
+                      PIX
+                    </span>
+                  </div>
+                )}
 
                 {/* Primary CTA */}
-                <button
-                  onClick={handleCheckout}
-                  disabled={isLoading}
-                  className={cn(
-                    "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-all",
-                    canSubmit
-                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600 active:scale-[0.98]"
-                      : "cursor-not-allowed bg-zinc-800 text-zinc-500"
-                  )}
-                >
-                  {isLoading ? (
-                    <>
-                      <Spinner />
-                      {getLoadingLabel()}
-                    </>
-                  ) : !selectedFile ? (
-                    "Envie uma imagem para continuar"
-                  ) : !selectedStyle ? (
-                    "Escolha um tipo de imagem"
-                  ) : selectedStyle === "colored-bg" && !backgroundColorMode ? (
-                    "Escolha como será a cor do fundo"
-                  ) : selectedStyle === "colored-bg" &&
-                    backgroundColorMode === "specific" &&
-                    !backgroundColor ? (
-                    "Escolha uma cor"
-                  ) : (
-                    "Continuar por R$ 9,90"
-                  )}
-                </button>
-
-                {/* Trial CTA — only for first-timers */}
-                {!freeTrialUsed && (
+                {canShowTrialCTA ? (
                   <>
+                    <button
+                      onClick={handleTrial}
+                      disabled={isLoading}
+                      className={cn(
+                        "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-all",
+                        canSubmit
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600 active:scale-[0.98]"
+                          : "cursor-not-allowed bg-zinc-800 text-zinc-500"
+                      )}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Spinner />
+                          {getLoadingLabel()}
+                        </>
+                      ) : !selectedFile ? (
+                        "Envie uma imagem para continuar"
+                      ) : !selectedStyle ? (
+                        "Escolha um tipo de imagem"
+                      ) : selectedStyle === "colored-bg" && !backgroundColorMode ? (
+                        "Escolha como será a cor do fundo"
+                      ) : selectedStyle === "colored-bg" &&
+                        backgroundColorMode === "specific" &&
+                        !backgroundColor ? (
+                        "Escolha uma cor"
+                      ) : !isLoggedIn ? (
+                        "Gere sua primeira prévia grátis"
+                      ) : (
+                        "Ver prévia grátis com marca d’água"
+                      )}
+                    </button>
+                    <p className="mt-1.5 text-center text-[11px] text-zinc-600">
+                      {!isLoggedIn
+                        ? "Faça login apenas na hora de gerar"
+                        : "Geração gratuita · pague R$ 9,90 só se gostar"}
+                    </p>
+
                     <div className="my-3 flex items-center gap-3">
                       <div className="h-px flex-1 bg-zinc-800" />
                       <p className="text-xs text-zinc-600">ou</p>
                       <div className="h-px flex-1 bg-zinc-800" />
                     </div>
+
                     <button
-                      onClick={handleTrial}
+                      onClick={handleCheckout}
                       disabled={isLoading}
                       className={cn(
                         "flex w-full items-center justify-center gap-2 rounded-xl border px-6 py-2.5 text-sm font-medium transition-all",
                         canSubmit
-                          ? "border-emerald-500/40 text-emerald-400 hover:border-emerald-500/70 hover:bg-emerald-500/5"
+                          ? "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
                           : "cursor-not-allowed border-zinc-800 text-zinc-600"
                       )}
                     >
-                      Ver prévia grátis com marca d&apos;água
+                      Comprar por R$ 9,90
                     </button>
-                    <p className="mt-1.5 text-center text-[11px] text-zinc-600">
-                      Geração gratuita · pague R$ 9,90 só se gostar
-                    </p>
+
+                    <div className="mt-3 text-center">
+                      <Link
+                        href="/plans"
+                        className="text-xs text-zinc-500 underline-offset-2 transition-colors hover:text-zinc-300 hover:underline"
+                      >
+                        Comprar mais produtos disponíveis
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isLoading}
+                      className={cn(
+                        "flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-all",
+                        canSubmit
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600 active:scale-[0.98]"
+                          : "cursor-not-allowed bg-zinc-800 text-zinc-500"
+                      )}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Spinner />
+                          {getLoadingLabel()}
+                        </>
+                      ) : !selectedFile ? (
+                        "Envie uma imagem para continuar"
+                      ) : !selectedStyle ? (
+                        "Escolha um tipo de imagem"
+                      ) : selectedStyle === "colored-bg" && !backgroundColorMode ? (
+                        "Escolha como será a cor do fundo"
+                      ) : selectedStyle === "colored-bg" &&
+                        backgroundColorMode === "specific" &&
+                        !backgroundColor ? (
+                        "Escolha uma cor"
+                      ) : (
+                        "Continuar por R$ 9,90"
+                      )}
+                    </button>
+
+                    <div className="mt-3 text-center">
+                      <Link
+                        href="/plans"
+                        className="text-xs text-zinc-500 underline-offset-2 transition-colors hover:text-zinc-300 hover:underline"
+                      >
+                        Comprar mais produtos disponíveis
+                      </Link>
+                    </div>
                   </>
                 )}
               </>

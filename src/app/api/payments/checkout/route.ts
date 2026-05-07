@@ -22,6 +22,8 @@ function isValidUploadKey(key: string, userId: string): boolean {
   );
 }
 
+const isDev = process.env.NODE_ENV !== "production";
+
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -29,10 +31,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => null);
-  console.log("[checkout] body recebido:", JSON.stringify(body));
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    console.error("[checkout] zod errors:", JSON.stringify(parsed.error.flatten()));
+    if (isDev) console.error("[checkout] zod errors:", JSON.stringify(parsed.error.flatten()));
     return NextResponse.json({ error: "Opções de geração inválidas" }, { status: 400 });
   }
 
@@ -43,11 +44,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "uploadKey inválido" }, { status: 422 });
   }
 
-  console.log("[checkout] selectedStyle:", selectedStyle, "| preset:", getPresetName(selectedStyle), "| colorMode:", backgroundColorMode, "| color:", backgroundColor);
+  if (isDev) {
+    console.log(`[checkout] userId=${userId} style=${selectedStyle} preset=${getPresetName(selectedStyle)} colorMode=${backgroundColorMode} color=${backgroundColor}`);
+  }
 
   const prompt = getStylePrompt(selectedStyle, backgroundColorMode ?? null, backgroundColor ?? null);
 
-  console.log("[checkout] prompt length:", prompt.length);
+  if (isDev) console.log("[checkout] prompt length:", prompt.length);
 
   if (!prompt) {
     return NextResponse.json({ error: "Estilo de geração inválido" }, { status: 400 });

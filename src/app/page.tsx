@@ -1,26 +1,48 @@
 import Image from "next/image";
 import Link from "next/link";
+import { auth } from "@/auth";
+import { UserMenu } from "@/components/UserMenu";
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
-function Navbar() {
+async function Navbar() {
+  const session = await auth();
+  const isLoggedIn = !!session?.user?.id;
+
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <span className="text-xl font-bold tracking-tight text-zinc-900">Monetify</span>
         <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            Entrar
-          </Link>
-          <Link
-            href="/generate"
-            className="hidden sm:inline-flex items-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 transition-colors"
-          >
-            Começar agora
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link
+                href="/generate"
+                className="hidden sm:inline-flex items-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-400"
+              >
+                Gerar imagem
+              </Link>
+              <UserMenu
+                name={session.user.name ?? null}
+                image={session.user.image ?? null}
+              />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-xl border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900"
+              >
+                Entrar
+              </Link>
+              <Link
+                href="/generate"
+                className="hidden sm:inline-flex items-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-700"
+              >
+                Começar agora
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
@@ -261,7 +283,7 @@ const SHOWCASE = [
 },
 {
   before: "/produto-3-antes.jpg",
-  after: "/produto-3-depois.png",
+  after: "/produto-3-depoiss.png",
 },
 ];
 

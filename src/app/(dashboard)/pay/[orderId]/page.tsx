@@ -18,11 +18,10 @@ export default async function PayPage({
 
   const { orderId } = await params;
 
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId: session.user.id },
     select: {
       id: true,
-      userId: true,
       amount: true,
       paymentStatus: true,
       generationStatus: true,
@@ -43,8 +42,12 @@ export default async function PayPage({
     },
   });
 
-  if (!order || order.userId !== session.user.id) {
+  if (!order) {
     notFound();
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(`[pay] userId=${session.user.id} orderId=${orderId}`);
   }
 
   // ── PACKAGE order: resolve plan info + activation status ─────────────────
@@ -61,7 +64,7 @@ export default async function PayPage({
 
     if (order.paymentStatus === "PAID") {
       const creditTx = await prisma.creditTransaction.findFirst({
-        where: { orderId: order.id, type: "PURCHASED" },
+        where: { orderId: order.id, userId: session.user.id, type: "PURCHASED" },
         select: { id: true },
       });
       packageActivated = creditTx !== null;
