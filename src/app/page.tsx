@@ -251,18 +251,18 @@ function HowItWorks() {
 // ─── Showcase ────────────────────────────────────────────────────────────────
 
 const SHOWCASE = [
-  {
-    before: "/showcase/produto-1-antes.png",
-    after:  "/showcase/produto-1-depois.png",
-  },
-  {
-    before: "/showcase/produto-2-antes.png",
-    after:  "/showcase/produto-2-depois.png",
-  },
-  {
-    before: "/showcase/produto-3-antes.png",
-    after:  "/showcase/produto-3-depois.png",
-  },
+{
+  before: "/produto-1-antes.png",
+  after: "/produto-1-depois.png",
+},
+{
+  before: "/produto-2-antes.jpg",
+  after: "/produto-2-depois.png",
+},
+{
+  before: "/produto-3-antes.jpg",
+  after: "/produto-3-depois.png",
+},
 ];
 
 function Showcase() {
