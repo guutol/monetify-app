@@ -5,7 +5,9 @@ export type StylePresetId =
   | "lifestyle_context"
   | "studio_premium"
   | "social_ad_clean"
-  | "closeup_detail";
+  | "closeup_detail"
+  // Dedicated preset — not yet mapped to any UI style; available for future exposure
+  | "perfume_premium";
 
 // Maps UI style IDs (GenerateClient) → internal preset IDs
 const STYLE_ID_TO_PRESET: Record<string, StylePresetId> = {
@@ -35,11 +37,24 @@ const PRESET_PROMPTS: Record<Exclude<StylePresetId, "colored_bg">, string> = {
 
   studio_premium:
     "Use a imagem enviada como referência principal e obrigatória do produto. " +
-    "Gere uma foto profissional de estúdio premium, com iluminação suave e sofisticada, fundo limpo e elegante, composição refinada e sombra realista. " +
-    "Remova mãos, pessoas, mesa, bagunça, fundo original e qualquer elemento externo desnecessário. " +
-    "Preserve com máxima fidelidade o produto principal: mesmo formato, cor, proporções, textura, material, acabamento, botões, entradas, rótulos, embalagem, câmeras, lentes, sensores, logo/marca existente e todos os detalhes reais. " +
+    "Gere uma foto publicitária premium de estúdio com iluminação dramática e sofisticada: rim light lateral ou traseiro definindo contornos, destaques controlados, sombra realista com profundidade e gradiente. " +
+    "Use fundo rico e atmosférico em tons escuros e profundos — preto aveludado, azul-marinho profundo, grafite ou bordô escuro — com textura sutil de estúdio que transmita sofisticação. " +
+    "Se o produto for um perfume, fragrância, colônia, eau de parfum ou cosmético de luxo: coloque-o sobre pedestal de mármore escuro, obsidiana ou vidro espelhado; adicione névoa fina e translúcida ao redor da base; use rim lighting dourado ou prateado que realce o frasco com brilho sofisticado; crie reflexo dramático na superfície e profundidade de campo cinematográfica, como uma campanha publicitária de perfume de alta gama. " +
+    "Para qualquer produto: use composição editorial e aspiracional com espaço negativo intencional, reflexos sutis na superfície e visual de anúncio de marca premium. " +
+    "Remova mãos, pessoas, mesa comum, fundo original e qualquer elemento externo desnecessário. " +
+    "Preserve com máxima fidelidade o produto principal: formato exato, cor, proporções, textura, material, acabamento, tampa, ornamentos, rótulos, embalagem, câmeras, lentes, sensores, logo/marca existente e todos os detalhes reais. " +
     "Não altere o design do produto, não mude a cor, não invente partes, não remova elementos reais, não adicione textos, logos inexistentes, pessoas, mãos ou acessórios. " +
-    "O resultado deve parecer uma foto publicitária profissional, mas o produto deve continuar idêntico ao original.",
+    "O produto deve continuar idêntico ao original, apresentado em composição publicitária sofisticada e visualmente impactante.",
+
+  // Dedicated preset for fragrance / luxury cosmetics — not yet in UI
+  perfume_premium:
+    "Use a imagem enviada como referência principal e obrigatória do produto. " +
+    "Gere uma imagem de campanha publicitária de luxo para perfume ou fragrância premium: coloque o frasco sobre pedestal de mármore negro, obsidiana ou vidro espelhado escuro; adicione névoa fina e translúcida sugerindo elegância e mistério ao redor da base; use rim lighting dourado ou platinado que realce o frasco com brilho sofisticado; crie fundo profundo e atmosférico em preto aveludado ou azul noite escuro; produza reflexo dramático e preciso na superfície do pedestal; use profundidade de campo cinematográfica com foco nítido no frasco e desfoque suave no fundo. " +
+    "Composição editorial aspiracional com espaço negativo intencional, como uma campanha de alto orçamento de marca de perfume de luxo europeu. " +
+    "Remova completamente mãos, pessoas, mesa comum, fundo original, embalagem externa e qualquer elemento estranho ao produto. " +
+    "Preserve com máxima fidelidade o frasco: forma exata, cor do vidro, transparência, tampa, ornamentos, spray ou aplicador, rótulo, nome da marca impresso, acabamento metálico e todos os detalhes reais visíveis. " +
+    "Não redesenhe o frasco, não altere a cor do vidro, não troque a tampa, não invente partes, não remova elementos existentes e não adicione texto, pessoas ou mãos. " +
+    "O resultado deve parecer uma campanha visual de perfume de altíssimo padrão, com o produto absolutamente fiel ao original.",
 
   lifestyle_context:
     "Use a imagem enviada como referência principal e obrigatória do produto. " +
