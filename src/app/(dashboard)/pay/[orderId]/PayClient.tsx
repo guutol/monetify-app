@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 
+interface Preview {
+  imageId: string;
+  imageUrl: string;
+}
+
 interface Props {
   orderId: string;
   amount: number;
@@ -14,6 +19,7 @@ interface Props {
   initialGenerationStatus: string;
   initialImageUrl: string | null;
   initialImageId: string | null;
+  initialPreviews: Preview[];
   isDevEnvironment: boolean;
 }
 
@@ -21,6 +27,7 @@ type Phase =
   | "waiting_payment"
   | "paid_ready"
   | "generating"
+  | "choosing"
   | "done"
   | "expired"
   | "failed";
@@ -43,6 +50,7 @@ export function PayClient({
   initialGenerationStatus,
   initialImageUrl,
   initialImageId,
+  initialPreviews,
   isDevEnvironment,
 }: Props) {
   const [phase, setPhase] = useState<Phase>(() => {
@@ -52,7 +60,11 @@ export function PayClient({
     )
       return "expired";
     if (initialPaymentStatus === "PAID") {
-      if (initialGenerationStatus === "COMPLETED") return "done";
+      if (initialGenerationStatus === "COMPLETED") {
+        if (initialImageUrl) return "done";
+        if (initialPreviews.length > 0) return "choosing";
+        return "done";
+      }
       if (initialGenerationStatus === "FAILED") return "failed";
       return "paid_ready";
     }
@@ -63,7 +75,10 @@ export function PayClient({
 
   const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl);
   const [imageId, setImageId] = useState<string | null>(initialImageId);
+  const [previews, setPreviews] = useState<Preview[]>(initialPreviews);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [chooseError, setChooseError] = useState<string | null>(null);
+  const [isChoosing, setIsChoosing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [simulateError, setSimulateError] = useState<string | null>(null);
@@ -137,17 +152,44 @@ export function PayClient({
       const data = await res.json();
 
       if (!res.ok) {
-        setGenerateError(data.error ?? "Erro ao gerar imagem");
+        setGenerateError(data.error ?? "Erro ao gerar imagens");
         setPhase("paid_ready");
         return;
       }
 
-      setImageUrl(data.imageUrl);
-      setImageId(data.imageId);
-      setPhase("done");
+      setPreviews(data.previews ?? []);
+      setPhase("choosing");
     } catch {
       setGenerateError("Erro de conexão. Tente novamente.");
       setPhase("paid_ready");
+    }
+  }
+
+  async function handleChoose(chosenImageId: string, chosenImageUrl: string) {
+    setIsChoosing(true);
+    setChooseError(null);
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}/choose`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageId: chosenImageId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setChooseError(data.error ?? "Erro ao escolher imagem. Tente novamente.");
+        return;
+      }
+
+      setImageUrl(chosenImageUrl);
+      setImageId(chosenImageId);
+      setPhase("done");
+    } catch {
+      setChooseError("Erro de conexão. Tente novamente.");
+    } finally {
+      setIsChoosing(false);
     }
   }
 
@@ -189,7 +231,8 @@ export function PayClient({
   const PHASE_TITLE: Record<Phase, string> = {
     waiting_payment: "Finalize seu pagamento",
     paid_ready: "Pagamento confirmado!",
-    generating: "Gerando sua imagem...",
+    generating: "Gerando suas prévias...",
+    choosing: "Escolha sua imagem final",
     done: "Imagem gerada com sucesso!",
     expired: "Cobrança expirada",
     failed: "Falha na geração",
@@ -198,8 +241,10 @@ export function PayClient({
   const PHASE_SUBTITLE: Record<Phase, string> = {
     waiting_payment:
       "Após a confirmação do pagamento, sua imagem será gerada automaticamente.",
-    paid_ready: "Clique abaixo para gerar sua imagem com IA.",
-    generating: "Isso pode levar até 30 segundos. Não feche esta página.",
+    paid_ready: "Clique abaixo para gerar suas 2 prévias com IA.",
+    generating: "Isso pode levar até 60 segundos. Não feche esta página.",
+    choosing:
+      "Selecione 1 das 2 prévias geradas. Apenas a imagem escolhida ficará disponível para download.",
     done: "Seu resultado está pronto para download.",
     expired: "O código PIX expirou. Crie uma nova cobrança para continuar.",
     failed: "Houve um problema ao gerar sua imagem.",
@@ -242,7 +287,6 @@ export function PayClient({
         {/* ── waiting_payment ─────────────────────────────── */}
         {phase === "waiting_payment" && (
           <>
-            {/* Dev alert — full width, above grid, visible on all viewports */}
             {isDevEnvironment && (
               <div className="mb-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-5 py-4">
                 <p className="text-xs font-semibold text-amber-400">
@@ -257,7 +301,6 @@ export function PayClient({
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
 
-            {/* Left column — order-2 on mobile so payment card shows first */}
             <div className="order-2 min-w-0 space-y-5 lg:order-1">
 
               {/* Order card */}
@@ -275,7 +318,7 @@ export function PayClient({
                     {formatAmount(amount)}
                   </span>
                   <span className="text-sm text-zinc-500">
-                    imagem gerada por IA
+                    2 prévias geradas por IA
                   </span>
                 </div>
               </div>
@@ -288,8 +331,8 @@ export function PayClient({
                 <div className="space-y-4">
                   {[
                     "Você finaliza o pagamento",
-                    "A IA gera sua imagem",
-                    "Você baixa o resultado no histórico",
+                    "A IA gera 2 prévias da sua imagem",
+                    "Você escolhe 1 prévia como resultado final",
                   ].map((text, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">
@@ -302,7 +345,6 @@ export function PayClient({
               </div>
             </div>
 
-            {/* Right column — order-1 on mobile so it appears above left col */}
             <div className="order-1 min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30 lg:order-2">
               <p className="mb-5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                 Resumo do pagamento
@@ -345,7 +387,6 @@ export function PayClient({
                 Escaneie no seu banco ou use o código abaixo
               </p>
 
-              {/* PIX code display */}
               <button
                 onClick={handleCopy}
                 className="w-full truncate rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-left text-xs font-mono text-zinc-400 transition-colors hover:bg-zinc-700"
@@ -362,7 +403,6 @@ export function PayClient({
                 </button>
               )}
 
-              {/* Polling indicator */}
               <div className="mt-4 flex items-center justify-center gap-2 text-xs text-zinc-400">
                 <div className="h-2 w-2 animate-pulse rounded-full bg-amber-400" />
                 Aguardando confirmação do pagamento...
@@ -378,7 +418,6 @@ export function PayClient({
                 </p>
               )}
 
-              {/* Dev: simulate paid */}
               {isDevEnvironment && (
                 <div className="mt-5 border-t border-dashed border-amber-500/20 pt-5">
                   {simulateError && (
@@ -397,7 +436,6 @@ export function PayClient({
                 </div>
               )}
 
-              {/* Trust signals */}
               <div className="mt-5 space-y-2.5 border-t border-zinc-800 pt-5">
                 <p className="flex items-center gap-2 text-xs text-zinc-500">
                   <svg
@@ -466,7 +504,7 @@ export function PayClient({
                 Pagamento confirmado!
               </p>
               <p className="mt-1 text-xs text-emerald-300/70">
-                Clique abaixo para gerar sua imagem com IA.
+                Clique abaixo para gerar suas 2 prévias com IA.
               </p>
             </div>
 
@@ -480,7 +518,7 @@ export function PayClient({
               onClick={handleGenerate}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-4 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
             >
-              Gerar Imagem
+              Gerar 2 prévias
             </button>
           </div>
         )}
@@ -491,12 +529,93 @@ export function PayClient({
             <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 py-20">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
               <p className="mt-5 text-sm font-medium text-zinc-300">
-                Gerando sua imagem com IA...
+                Gerando 2 prévias com IA...
               </p>
               <p className="mt-2 text-xs text-zinc-500">
-                Isso pode levar até 30 segundos
+                Isso pode levar até 60 segundos
               </p>
             </div>
+          </div>
+        )}
+
+        {/* ── choosing ────────────────────────────────────── */}
+        {phase === "choosing" && (
+          <div className="space-y-5">
+            {chooseError && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+                {chooseError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              {previews.map((preview, idx) => (
+                <div
+                  key={preview.imageId}
+                  className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+                >
+                  {/* Image with watermark overlay */}
+                  <div className="relative">
+                    <Image
+                      src={preview.imageUrl}
+                      alt={`Prévia ${idx + 1}`}
+                      width={512}
+                      height={512}
+                      className="w-full"
+                      unoptimized
+                    />
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      <span className="select-none rotate-[-30deg] text-3xl font-bold tracking-widest text-white/20">
+                        PRÉVIA
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Card body */}
+                  <div className="p-4">
+                    <p className="mb-3 text-xs text-zinc-500">
+                      Opção {idx + 1} de {previews.length}
+                    </p>
+                    <button
+                      onClick={() => handleChoose(preview.imageId, preview.imageUrl)}
+                      disabled={isChoosing}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isChoosing ? (
+                        <>
+                          <svg
+                            className="h-4 w-4 animate-spin"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                            />
+                          </svg>
+                          Salvando...
+                        </>
+                      ) : (
+                        "Escolher esta imagem"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-center text-xs text-zinc-600">
+              Após escolher, apenas a imagem selecionada ficará disponível para download.
+            </p>
           </div>
         )}
 
@@ -505,7 +624,7 @@ export function PayClient({
           <div className="mx-auto max-w-2xl space-y-5">
             <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4">
               <p className="text-sm font-semibold text-emerald-400">
-                Pagamento confirmado e imagem gerada com sucesso!
+                Imagem escolhida e pronta para download!
               </p>
             </div>
 

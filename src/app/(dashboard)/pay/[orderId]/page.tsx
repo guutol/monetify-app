@@ -32,6 +32,9 @@ export default async function PayPage({
       image: {
         select: { id: true, imageUrl: true, s3Key: true },
       },
+      images: {
+        select: { id: true, imageUrl: true, s3Key: true },
+      },
     },
   });
 
@@ -39,7 +42,7 @@ export default async function PayPage({
     notFound();
   }
 
-  // Resolve image URL server-side so the done phase shows image on reload
+  // Resolve chosen image URL (old flow: imageId set directly; new flow: set after user chooses)
   let initialImageUrl: string | null = null;
   const img = order.image;
   if (img) {
@@ -48,6 +51,20 @@ export default async function PayPage({
     } else if (img.imageUrl) {
       initialImageUrl = img.imageUrl;
     }
+  }
+
+  // Resolve preview URLs when COMPLETED but user hasn't chosen yet (new 2-preview flow)
+  let initialPreviews: { imageId: string; imageUrl: string }[] = [];
+  if (order.generationStatus === "COMPLETED" && !order.imageId && order.images.length > 0) {
+    initialPreviews = await Promise.all(
+      order.images.map(async (preview) => {
+        let url = preview.imageUrl;
+        if (preview.s3Key) {
+          url = await getPresignedUrl(preview.s3Key).catch(() => preview.imageUrl);
+        }
+        return { imageId: preview.id, imageUrl: url };
+      })
+    );
   }
 
   return (
@@ -62,6 +79,7 @@ export default async function PayPage({
       initialGenerationStatus={order.generationStatus}
       initialImageUrl={initialImageUrl}
       initialImageId={img?.id ?? null}
+      initialPreviews={initialPreviews}
       isDevEnvironment={process.env.NODE_ENV === "development"}
     />
   );

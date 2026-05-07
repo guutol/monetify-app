@@ -69,13 +69,16 @@ model VerificationToken {
 model GeneratedImage {
   id        String   @id @default(cuid())
   userId    String
+  orderId   String?
   prompt    String
   imageUrl  String
   s3Key     String?
+  isChosen  Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order Order?
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderChosen Order? @relation("OrderChosenImage")
+  orderPrev   Order? @relation("OrderPreviews", fields: [orderId], references: [id], onDelete: SetNull)
 }
 
 model Subscription {
@@ -107,7 +110,8 @@ model Order {
 
   // Geração
   imageId          String?          @unique
-  image            GeneratedImage?  @relation(fields: [imageId], references: [id])
+  image            GeneratedImage?  @relation("OrderChosenImage", fields: [imageId], references: [id])
+  images           GeneratedImage[] @relation("OrderPreviews")
   generationStatus GenerationStatus @default(PENDING)
 
   // Dados do prompt (salvo no checkout, usado pela geração após pagamento)

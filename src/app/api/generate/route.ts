@@ -65,13 +65,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { presignedUrl, imageId } = await generateProductImage(
+    const { previews } = await generateProductImage(
       order.prompt,
       session.user.id,
       orderId
     );
 
-    return NextResponse.json({ imageUrl: presignedUrl, imageId });
+    return NextResponse.json({ previews });
   } catch (err) {
     if (isDev) console.error("[generate] generation failed:", err);
 

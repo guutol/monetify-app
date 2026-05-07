@@ -2,7 +2,10 @@ import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
 
-const MOCK_IMAGE_URL = "https://picsum.photos/seed/monetify/1024/1024";
+const MOCK_IMAGE_URLS = [
+  "https://picsum.photos/seed/monetify-a/1024/1024",
+  "https://picsum.photos/seed/monetify-b/1024/1024",
+];
 
 function resolveMockFlag(): boolean {
   const isDev = process.env.NODE_ENV !== "production";
@@ -20,42 +23,56 @@ function resolveMockFlag(): boolean {
     );
   }
 
-  // Never allow mock in production regardless of env value
   return isDev && parsed;
 }
 
-export async function generateProductImage(prompt: string, userId: string, orderId: string) {
+export type ImagePreview = { presignedUrl: string; imageId: string };
+
+export async function generateProductImage(
+  prompt: string,
+  userId: string,
+  orderId: string
+): Promise<{ previews: ImagePreview[] }> {
   const isMock = resolveMockFlag();
 
   if (isMock) {
     console.log("[generate] mock mode — skipping OpenAI + S3");
 
-    const image = await prisma.generatedImage.create({
-      data: { userId, prompt, imageUrl: MOCK_IMAGE_URL },
-    });
+    const images = await Promise.all(
+      MOCK_IMAGE_URLS.map((url) =>
+        prisma.generatedImage.create({
+          data: { userId, orderId, prompt, imageUrl: url },
+        })
+      )
+    );
 
     await prisma.order.update({
       where: { id: orderId },
-      data: { imageId: image.id, generationStatus: "COMPLETED" },
+      data: { generationStatus: "COMPLETED" },
     });
 
-    console.log("[generate] mock done, imageId:", image.id);
+    console.log("[generate] mock done, imageIds:", images.map((i) => i.id));
 
-    return { presignedUrl: MOCK_IMAGE_URL, imageId: image.id };
+    return {
+      previews: images.map((img, i) => ({
+        presignedUrl: MOCK_IMAGE_URLS[i],
+        imageId: img.id,
+      })),
+    };
   }
 
   // ── Real flow: OpenAI → S3 → DB ───────────────────────────────────────────
 
   const isDev = process.env.NODE_ENV !== "production";
 
-  if (isDev) console.log("[generate] calling OpenAI images.generate...");
+  if (isDev) console.log("[generate] calling OpenAI images.generate (n=2)...");
 
   let response: Awaited<ReturnType<typeof openai.images.generate>>;
   try {
     response = await openai.images.generate({
       model: "gpt-image-1",
       prompt,
-      n: 1,
+      n: 2,
       size: "1024x1024",
       quality: "high",
     });
@@ -64,49 +81,63 @@ export async function generateProductImage(prompt: string, userId: string, order
     throw err;
   }
 
-  if (isDev) console.log("[generate] OpenAI response keys:", Object.keys(response.data?.[0] ?? {}));
-
-  const base64 = response.data?.[0]?.b64_json;
-  if (!base64) {
-    const detail = isDev ? JSON.stringify(response.data?.[0]) : "";
-    throw new Error(`OpenAI não retornou imagem${detail ? `: ${detail}` : ""}`);
+  const results = response.data ?? [];
+  if (results.length === 0) {
+    throw new Error("OpenAI não retornou imagens");
   }
 
-  if (isDev) console.log("[generate] base64 received, length:", base64.length);
+  if (isDev) console.log("[generate] OpenAI returned", results.length, "image(s)");
 
-  const image = await prisma.generatedImage.create({
-    data: { userId, prompt, imageUrl: "" },
-  });
-
-  const s3Key = buildGenerationKey(userId, image.id);
-
-  if (isDev) console.log("[generate] uploading to S3, key:", s3Key);
+  // Upload each image to S3 and create DB records sequentially to keep error
+  // handling simple — if one fails we clean up and rethrow.
+  const previews: ImagePreview[] = [];
+  const createdIds: string[] = [];
 
   try {
-    await uploadToS3(base64, s3Key);
+    for (let i = 0; i < results.length; i++) {
+      const base64 = results[i].b64_json;
+      if (!base64) {
+        throw new Error(`OpenAI não retornou base64 para a imagem ${i + 1}`);
+      }
+
+      const img = await prisma.generatedImage.create({
+        data: { userId, orderId, prompt, imageUrl: "" },
+      });
+      createdIds.push(img.id);
+
+      const s3Key = buildGenerationKey(userId, img.id);
+
+      if (isDev) console.log(`[generate] uploading image ${i + 1} to S3, key:`, s3Key);
+
+      await uploadToS3(base64, s3Key);
+
+      await prisma.generatedImage.update({
+        where: { id: img.id },
+        data: { s3Key },
+      });
+
+      const presignedUrl = await getPresignedUrl(s3Key);
+      previews.push({ presignedUrl, imageId: img.id });
+
+      if (isDev) console.log(`[generate] image ${i + 1} done — imageId:`, img.id);
+    }
   } catch (err) {
-    if (isDev) console.error("[generate] S3 upload error:", err);
-    // Clean up the orphan record — Order failure is handled by the route
-    await prisma.generatedImage.delete({ where: { id: image.id } }).catch(() => null);
+    if (isDev) console.error("[generate] upload/db error:", err);
+    // Clean up any orphan records created before the failure
+    if (createdIds.length > 0) {
+      await prisma.generatedImage
+        .deleteMany({ where: { id: { in: createdIds } } })
+        .catch(() => null);
+    }
     throw err;
   }
 
-  if (isDev) console.log("[generate] S3 upload done, updating DB...");
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { generationStatus: "COMPLETED" },
+  });
 
-  await prisma.$transaction([
-    prisma.generatedImage.update({
-      where: { id: image.id },
-      data: { s3Key },
-    }),
-    prisma.order.update({
-      where: { id: orderId },
-      data: { imageId: image.id, generationStatus: "COMPLETED" },
-    }),
-  ]);
+  if (isDev) console.log("[generate] all done —", previews.length, "previews ready");
 
-  const presignedUrl = await getPresignedUrl(s3Key);
-
-  if (isDev) console.log("[generate] done — imageId:", image.id, "s3Key:", s3Key);
-
-  return { presignedUrl, imageId: image.id };
+  return { previews };
 }
