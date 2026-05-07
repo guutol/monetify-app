@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, GetObjectCommandOutput } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const s3 = new S3Client({
@@ -53,4 +53,12 @@ export async function getPresignedUrl(
 ): Promise<string> {
   const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
   return getSignedUrl(s3, command, { expiresIn });
+}
+
+export async function downloadFromS3(key: string): Promise<Buffer> {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  const response: GetObjectCommandOutput = await s3.send(command);
+  if (!response.Body) throw new Error(`S3 body vazio para key: ${key}`);
+  const bytes = await (response.Body as { transformToByteArray(): Promise<Uint8Array> }).transformToByteArray();
+  return Buffer.from(bytes);
 }

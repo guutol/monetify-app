@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       paymentStatus: true,
       generationStatus: true,
       prompt: true,
+      originalImageKey: true,
     },
   });
 
@@ -68,7 +69,8 @@ export async function POST(req: NextRequest) {
     const { previews } = await generateProductImage(
       order.prompt,
       session.user.id,
-      orderId
+      orderId,
+      order.originalImageKey ?? undefined
     );
 
     // Rename presignedUrl → imageUrl to match the Preview interface in PayClient
