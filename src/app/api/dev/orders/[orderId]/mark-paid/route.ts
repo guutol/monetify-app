@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const session = await auth();

@@ -48,6 +48,36 @@ function formatAmount(cents: number) {
   });
 }
 
+function InvoiceRequestLink({ orderId }: { orderId: string }) {
+  const whatsapp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP;
+
+  if (!whatsapp) {
+    return (
+      <p className="pt-4 text-center text-xs text-zinc-600">
+        Precisa de nota fiscal? Entre em contato pelo suporte informando o número do pedido, CPF/CNPJ, nome/razão social e e-mail.
+      </p>
+    );
+  }
+
+  const message = encodeURIComponent(
+    `Olá! Quero solicitar nota fiscal do pedido #${orderId}.\nCPF/CNPJ: \nNome completo/Razão social: \nE-mail para envio da nota: `
+  );
+
+  return (
+    <div className="border-t border-zinc-800 pt-4 text-center">
+      <p className="text-xs text-zinc-500">Precisa de nota fiscal?</p>
+      <a
+        href={`https://wa.me/${whatsapp}?text=${message}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-1 inline-block text-xs text-zinc-400 underline-offset-2 hover:text-zinc-300 hover:underline"
+      >
+        Solicitar nota fiscal
+      </a>
+    </div>
+  );
+}
+
 // ── Trial previews UI ─────────────────────────────────────────────────────────
 
 function TrialPayUI({
@@ -568,6 +598,7 @@ function PackagePayUI({
                   Ver pacotes
                 </a>
               </div>
+              <InvoiceRequestLink orderId={orderId} />
             </>
           ) : (
             /* ── Pending activation (dev simulation or webhook delay) ────── */
@@ -1309,6 +1340,7 @@ export function PayClient({
                 Gerar outra imagem
               </a>
             </div>
+            <InvoiceRequestLink orderId={orderId} />
           </div>
         )}
 

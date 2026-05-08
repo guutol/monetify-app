@@ -7,8 +7,8 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "Not available in production" }, { status: 404 });
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const session = await auth();

@@ -134,7 +134,10 @@ export default async function PayPage({
       initialPreviews={initialPreviews}
       isTrial={order.isTrial}
       initialWatermarkedPreviews={initialWatermarkedPreviews}
-      isDevEnvironment={process.env.NODE_ENV === "development"}
+      isDevEnvironment={
+        process.env.NODE_ENV !== "production" &&
+        process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === "true"
+      }
     />
   );
 }
