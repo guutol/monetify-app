@@ -474,12 +474,14 @@ function Pricing() {
             <p className="mt-4 text-center text-xs text-zinc-400 lg:text-left">
               A prévia gratuita possui marca d&apos;água.
             </p>
-            <Link
-              href="/generate"
-              className="mt-auto flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3 pt-6 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition-all hover:bg-emerald-400"
-            >
-              Testar grátis
-            </Link>
+            <div className="mt-auto pt-6">
+              <Link
+                href="/generate"
+                className="flex w-full items-center justify-center rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition-all hover:bg-emerald-400"
+              >
+                Testar grátis
+              </Link>
+            </div>
           </div>
 
           {/* Paid options card */}
@@ -514,12 +516,14 @@ function Pricing() {
               </ul>
             </div>
 
-            <Link
-              href="/generate"
-              className="mt-auto flex items-center justify-center rounded-xl border border-zinc-300 px-6 py-3 pt-6 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50"
-            >
-              Gerar agora
-            </Link>
+            <div className="mt-auto pt-6">
+              <Link
+                href="/generate"
+                className="flex w-full items-center justify-center rounded-xl border border-zinc-300 px-6 py-3.5 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50"
+              >
+                Gerar agora
+              </Link>
+            </div>
           </div>
         </div>
 
