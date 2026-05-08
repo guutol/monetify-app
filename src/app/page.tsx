@@ -447,34 +447,36 @@ function Pricing() {
         <div className="grid gap-5 lg:grid-cols-2">
           {/* Free preview card */}
           <div className="flex flex-col rounded-2xl border border-emerald-200 bg-white p-7 shadow-md shadow-emerald-500/10">
-            <span className="inline-flex w-fit items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <span className="mx-auto inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 lg:mx-0">
               Para novos usuários
             </span>
-            <h3 className="mt-5 text-xl font-bold text-zinc-900">Prévia grátis</h3>
-            <div className="mt-3 flex items-end gap-1">
+            <h3 className="mt-5 text-center text-xl font-bold text-zinc-900 lg:text-left">Prévia grátis</h3>
+            <div className="mt-3 flex items-end justify-center gap-1 lg:justify-start">
               <span className="text-5xl font-bold tracking-tight text-zinc-900">R$&nbsp;0</span>
             </div>
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-2 text-center text-sm text-zinc-500 lg:text-left">
               Veja uma prévia do resultado antes de pagar.
             </p>
-            <ul className="mt-5 space-y-2 text-sm text-zinc-600">
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
-                Sem cartão de crédito
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
-                Login só na hora de gerar
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
+            <ul className="mx-auto mt-5 w-fit space-y-2 text-sm text-zinc-600 lg:mx-0">
+              <li className="flex items-center gap-2">
+                <span className="shrink-0 text-emerald-500">✓</span>
                 Veja o resultado antes de pagar
               </li>
+              <li className="flex items-center gap-2">
+                <span className="shrink-0 text-emerald-500">✓</span>
+                Pague apenas se gostar
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="shrink-0 text-emerald-500">✓</span>
+                Sem assinatura
+              </li>
             </ul>
-            <p className="mt-4 text-xs text-zinc-400">A prévia gratuita possui marca d&apos;água.</p>
+            <p className="mt-4 text-center text-xs text-zinc-400 lg:text-left">
+              A prévia gratuita possui marca d&apos;água.
+            </p>
             <Link
               href="/generate"
-              className="mt-auto pt-6 flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 hover:bg-emerald-400 transition-all"
+              className="mt-auto flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3 pt-6 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 transition-all hover:bg-emerald-400"
             >
               Testar grátis
             </Link>
@@ -482,21 +484,21 @@ function Pricing() {
 
           {/* Paid options card */}
           <div className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-7 shadow-sm">
-            <span className="inline-flex w-fit items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+            <span className="mx-auto inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600 lg:mx-0">
               Sem assinatura
             </span>
-            <h3 className="mt-5 text-xl font-bold text-zinc-900">Imagem sem marca</h3>
-            <div className="mt-3 flex items-end gap-1">
+            <h3 className="mt-5 text-center text-xl font-bold text-zinc-900 lg:text-left">Imagem sem marca</h3>
+            <div className="mt-3 flex items-end justify-center gap-1 lg:justify-start">
               <span className="text-xl font-medium text-zinc-400">R$</span>
               <span className="text-5xl font-bold tracking-tight text-zinc-900">9</span>
               <span className="mb-1 text-2xl font-bold text-zinc-900">,90</span>
             </div>
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-2 text-center text-sm text-zinc-500 lg:text-left">
               Libere o download da imagem final. Pague só se gostar do resultado.
             </p>
 
             <div className="mt-5 border-t border-zinc-100 pt-5">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-zinc-400">
+              <p className="mb-3 text-center text-xs font-semibold uppercase tracking-widest text-zinc-400 lg:text-left">
                 Pacotes para quem gera mais
               </p>
               <ul className="space-y-2">
@@ -514,7 +516,7 @@ function Pricing() {
 
             <Link
               href="/generate"
-              className="mt-auto pt-6 flex items-center justify-center rounded-xl border border-zinc-300 px-6 py-3 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50"
+              className="mt-auto flex items-center justify-center rounded-xl border border-zinc-300 px-6 py-3 pt-6 text-sm font-semibold text-zinc-700 transition-colors hover:border-zinc-400 hover:bg-zinc-50"
             >
               Gerar agora
             </Link>
