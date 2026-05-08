@@ -3,6 +3,21 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { UserMenu } from "@/components/UserMenu";
 
+function Logo({ className = "" }: { className?: string }) {
+  return (
+    <Link href="/" className={`flex items-center gap-2 ${className}`}>
+      <Image
+        src="/monetify-logo.png"
+        alt="Monetify"
+        width={32}
+        height={32}
+        className="shrink-0"
+      />
+      <span className="text-xl font-bold tracking-tight text-zinc-900">Monetify</span>
+    </Link>
+  );
+}
+
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 
 async function Navbar() {
@@ -12,7 +27,7 @@ async function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <span className="text-xl font-bold tracking-tight text-zinc-900">Monetify</span>
+        <Logo />
         <div className="flex items-center gap-3">
           {isLoggedIn ? (
             <>
@@ -565,7 +580,10 @@ function Footer() {
   return (
     <footer className="border-t border-zinc-100 bg-white px-4 py-8 sm:px-6">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-sm text-zinc-400 sm:flex-row">
-        <span className="font-semibold text-zinc-900">Monetify</span>
+        <span className="flex items-center gap-2 font-semibold text-zinc-900">
+          <Image src="/monetify-logo.png" alt="Monetify" width={20} height={20} className="shrink-0" />
+          Monetify
+        </span>
         <span>© {new Date().getFullYear()} Monetify. Todos os direitos reservados.</span>
       </div>
     </footer>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,9 +22,16 @@ export function NavBar({ credits }: Props) {
       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
         <Link
           href="/"
-          className="text-sm font-bold text-emerald-400 transition-colors hover:text-emerald-300"
+          className="flex items-center gap-2 transition-opacity hover:opacity-80"
         >
-          Monetify
+          <Image
+            src="/monetify-logo.png"
+            alt="Monetify"
+            width={28}
+            height={28}
+            className="shrink-0"
+          />
+          <span className="text-sm font-bold text-emerald-400">Monetify</span>
         </Link>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
