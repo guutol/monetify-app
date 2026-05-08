@@ -181,8 +181,8 @@ function Hero() {
             </h1>
 
             <p className="mt-5 text-lg leading-relaxed text-zinc-400">
-              Envie uma foto do seu produto, escolha o estilo e receba uma prévia grátis com marca
-              d&apos;água. Se gostar, pague R$&nbsp;9,90 via PIX para baixar a imagem limpa.
+              Envie uma foto do seu produto, escolha o estilo e veja o resultado antes de pagar.
+              Se gostar, libere a imagem final por R$&nbsp;9,90.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
@@ -200,7 +200,7 @@ function Hero() {
               </a>
             </div>
             <p className="mt-4 text-sm text-zinc-600">
-              Sem cartão para testar · Login só na hora de gerar · Prévia com marca d&apos;água
+              Sem cartão para testar · Login só na hora de gerar · Pague apenas se gostar
             </p>
           </div>
 
@@ -233,13 +233,13 @@ const STEPS = [
     icon: "👁️",
     step: "03",
     title: "Veja a prévia grátis",
-    desc: "Você recebe prévias com marca d'água para avaliar o resultado antes de pagar.",
+    desc: "Você recebe prévias para avaliar o resultado antes de pagar qualquer coisa.",
   },
   {
     icon: "✅",
     step: "04",
     title: "Libere sem marca",
-    desc: "Gostou? Pague R$ 9,90 para baixar a imagem final sem marca d'água.",
+    desc: "Gostou? Pague R$ 9,90 para baixar a imagem final pronta para usar.",
   },
 ];
 
@@ -378,7 +378,7 @@ const BENEFITS = [
   {
     icon: "👁️",
     title: "Teste o resultado antes de pagar",
-    desc: "Receba prévias com marca d'água e avalie o resultado. Só pague quando gostar — sem risco.",
+    desc: "Avalie o resultado antes de pagar. Só pague quando gostar — sem risco.",
   },
   {
     icon: "📸",
@@ -439,7 +439,7 @@ function Pricing() {
             Teste grátis. Pague só se gostar.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-zinc-500">
-            Gere uma prévia com marca d&apos;água sem cartão. Para baixar sem marca, libere por
+            Veja o resultado gratuitamente antes de pagar. Para usar a imagem final, libere por
             R$&nbsp;9,90 ou escolha um pacote.
           </p>
         </div>
@@ -455,7 +455,7 @@ function Pricing() {
               <span className="text-5xl font-bold tracking-tight text-zinc-900">R$&nbsp;0</span>
             </div>
             <p className="mt-2 text-sm text-zinc-500">
-              1 prévia com marca d&apos;água para você avaliar o resultado antes de pagar.
+              Veja uma prévia do resultado antes de pagar.
             </p>
             <ul className="mt-5 space-y-2 text-sm text-zinc-600">
               <li className="flex items-start gap-2">
@@ -468,9 +468,10 @@ function Pricing() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 shrink-0 text-emerald-500">✓</span>
-                Prévia com marca d&apos;água
+                Veja o resultado antes de pagar
               </li>
             </ul>
+            <p className="mt-4 text-xs text-zinc-400">A prévia gratuita possui marca d&apos;água.</p>
             <Link
               href="/generate"
               className="mt-auto pt-6 flex items-center justify-center rounded-xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-emerald-500/25 hover:bg-emerald-400 transition-all"
@@ -491,7 +492,7 @@ function Pricing() {
               <span className="mb-1 text-2xl font-bold text-zinc-900">,90</span>
             </div>
             <p className="mt-2 text-sm text-zinc-500">
-              Libere o download da imagem final sem marca d&apos;água. Pague só se gostar.
+              Libere o download da imagem final. Pague só se gostar do resultado.
             </p>
 
             <div className="mt-5 border-t border-zinc-100 pt-5">
@@ -538,7 +539,7 @@ function FinalCTA() {
           Teste com um produto real antes de pagar
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-zinc-400">
-          Envie uma foto simples, veja a prévia com marca d&apos;água e pague apenas se quiser baixar sem marca.
+          Envie uma foto simples, veja o resultado e pague apenas se quiser liberar a imagem final.
         </p>
         <Link
           href="/generate"
@@ -546,7 +547,7 @@ function FinalCTA() {
         >
           Gerar minha prévia grátis →
         </Link>
-        <p className="mt-4 text-sm text-zinc-600">Sem cartão · Sem assinatura · Prévia com marca d&apos;água</p>
+        <p className="mt-4 text-sm text-zinc-600">Sem cartão · Sem assinatura · Teste antes de pagar</p>
       </div>
     </section>
   );
