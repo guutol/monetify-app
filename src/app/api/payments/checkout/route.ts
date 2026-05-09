@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { createPixCharge } from "@/lib/abacatepay-api";
+import { createPixPayment } from "@/lib/mercadopago";
 import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
 import { getStylePrompt, getPresetName } from "@/lib/prompts";
 
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
 
   const { selectedStyle, backgroundColorMode, backgroundColor, uploadKey } = parsed.data;
   const userId = session.user.id;
+  const userEmail = session.user.email ?? "cliente@monetify.com.br";
 
   if (uploadKey && !isValidUploadKey(uploadKey, userId)) {
     return NextResponse.json({ error: "uploadKey inválido" }, { status: 422 });
@@ -70,15 +71,17 @@ export async function POST(req: NextRequest) {
   });
 
   try {
-    const pixData = await createPixCharge({
-      amount: PRICE_PER_GENERATION_CENTS,
-      externalId: order.id,
+    const pixData = await createPixPayment({
+      amountCents: PRICE_PER_GENERATION_CENTS,
+      orderId: order.id,
+      payerEmail: userEmail,
+      description: "Monetify - Imagem sem marca d'água",
     });
 
     await prisma.order.update({
       where: { id: order.id },
       data: {
-        externalId: pixData.id,
+        externalId: pixData.paymentId,
         pixBrCode: pixData.brCode,
         pixBrCodeBase64: pixData.brCodeBase64,
         pixExpiresAt: new Date(pixData.expiresAt),
@@ -91,12 +94,9 @@ export async function POST(req: NextRequest) {
       brCodeBase64: pixData.brCodeBase64,
       expiresAt: pixData.expiresAt,
       amount: PRICE_PER_GENERATION_CENTS,
-      devMode: pixData.devMode,
     });
   } catch (err) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[checkout] AbacatePay error:", err);
-    }
+    if (isDev) console.error("[checkout] Mercado Pago error:", err);
 
     await prisma.order.update({
       where: { id: order.id },

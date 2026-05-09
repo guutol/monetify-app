@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { createPixCharge } from "@/lib/abacatepay-api";
+import { createPixPayment } from "@/lib/mercadopago";
 import { getPlanById } from "@/config/pricing";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = session.user.id;
+  const userEmail = session.user.email ?? "cliente@monetify.com.br";
 
   if (isDev) {
     console.log(`[checkout/package] planId=${planId} | amount=${plan.amountCents} | products=${plan.productsCount}`);
@@ -57,22 +58,24 @@ export async function POST(req: NextRequest) {
   if (isDev) console.log("[checkout/package] Order criada:", order.id);
 
   try {
-    const pixData = await createPixCharge({
-      amount: plan.amountCents,
-      externalId: order.id,
+    const pixData = await createPixPayment({
+      amountCents: plan.amountCents,
+      orderId: order.id,
+      payerEmail: userEmail,
+      description: `Monetify - ${plan.label}`,
     });
 
     await prisma.order.update({
       where: { id: order.id },
       data: {
-        externalId: pixData.id,
+        externalId: pixData.paymentId,
         pixBrCode: pixData.brCode,
         pixBrCodeBase64: pixData.brCodeBase64,
         pixExpiresAt: new Date(pixData.expiresAt),
       },
     });
 
-    if (isDev) console.log("[checkout/package] AbacatePay OK, externalId:", pixData.id);
+    if (isDev) console.log("[checkout/package] MP OK, paymentId:", pixData.paymentId);
 
     return NextResponse.json({
       orderId: order.id,
@@ -83,10 +86,9 @@ export async function POST(req: NextRequest) {
       planId: plan.planId,
       planLabel: plan.label,
       productsCount: plan.productsCount,
-      devMode: pixData.devMode,
     });
   } catch (err) {
-    if (isDev) console.error("[checkout/package] AbacatePay error:", err);
+    if (isDev) console.error("[checkout/package] Mercado Pago error:", err);
 
     await prisma.order.update({
       where: { id: order.id },

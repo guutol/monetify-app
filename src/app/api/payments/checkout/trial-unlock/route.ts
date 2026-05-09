@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { createPixCharge } from "@/lib/abacatepay-api";
+import { createPixPayment } from "@/lib/mercadopago";
 import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
 
 const schema = z.object({ orderId: z.string() });
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
 
   const { orderId } = parsed.data;
   const userId = session.user.id;
+  const userEmail = session.user.email ?? "cliente@monetify.com.br";
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },
@@ -59,15 +60,17 @@ export async function POST(req: NextRequest) {
 
   // Create PIX charge
   try {
-    const pixData = await createPixCharge({
-      amount: PRICE_PER_GENERATION_CENTS,
-      externalId: orderId,
+    const pixData = await createPixPayment({
+      amountCents: PRICE_PER_GENERATION_CENTS,
+      orderId,
+      payerEmail: userEmail,
+      description: "Monetify - Imagem sem marca d'água",
     });
 
     await prisma.order.update({
       where: { id: orderId },
       data: {
-        externalId: pixData.id,
+        externalId: pixData.paymentId,
         pixBrCode: pixData.brCode,
         pixBrCodeBase64: pixData.brCodeBase64,
         pixExpiresAt: new Date(pixData.expiresAt),
@@ -79,11 +82,10 @@ export async function POST(req: NextRequest) {
       brCodeBase64: pixData.brCodeBase64,
       expiresAt: pixData.expiresAt,
       amount: PRICE_PER_GENERATION_CENTS,
-      devMode: pixData.devMode,
     });
   } catch (err) {
     if (process.env.NODE_ENV !== "production") {
-      console.error("[trial-unlock] AbacatePay error:", err);
+      console.error("[trial-unlock] Mercado Pago error:", err);
     }
     return NextResponse.json({ error: "Erro ao criar cobrança. Tente novamente." }, { status: 502 });
   }
