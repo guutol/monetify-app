@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
   let previews: { imageId: string; watermarkUrl: string }[];
 
   try {
-    const result = await generateProductImage(prompt, userId, order.id, uploadKey ?? undefined, getGenerationQualities("trial"));
+    const result = await generateProductImage(prompt, userId, order.id, uploadKey ?? undefined, getGenerationQualities("trial"), "trial");
 
     // Apply watermarks to each preview
     previews = await Promise.all(
@@ -129,7 +129,8 @@ export async function POST(req: NextRequest) {
       })
     );
   } catch (err) {
-    if (isDev) console.error("[trial] generation failed, rolling back:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[trial] generation failed for orderId=${order.id}: ${errMsg}`);
 
     // Roll back: mark order failed + release trial lock
     await prisma.$transaction([

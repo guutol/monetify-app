@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       order.id,
       uploadKey ?? undefined,
       getGenerationQualities("credit"),
+      "credit",
     );
 
     return NextResponse.json({

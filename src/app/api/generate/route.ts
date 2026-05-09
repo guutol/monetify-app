@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
       orderId,
       order.originalImageKey ?? undefined,
       getGenerationQualities("single"),
+      "single",
     );
 
     // Rename presignedUrl → imageUrl to match the Preview interface in PayClient
@@ -80,7 +81,8 @@ export async function POST(req: NextRequest) {
       previews: previews.map((p) => ({ imageUrl: p.presignedUrl, imageId: p.imageId })),
     });
   } catch (err) {
-    if (isDev) console.error("[generate] generation failed:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[generate] generation failed for orderId=${orderId}: ${errMsg}`);
 
     await prisma.order.update({
       where: { id: orderId },

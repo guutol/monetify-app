@@ -85,6 +85,7 @@ export async function generateProductImage(
   orderId: string,
   originalImageKey?: string,
   qualities: [ImageQuality, ImageQuality] = ["high", "high"],
+  flowType = "unknown",
 ): Promise<{ previews: ImagePreview[] }> {
   const isMock = isMockImageEnabled();
   const isDev = process.env.NODE_ENV !== "production";
@@ -135,9 +136,13 @@ export async function generateProductImage(
 
   const useImageEdit = originalBuffer !== null;
 
-  console.log(
-    `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit" : "images.generate"} qualities=${qualities.join(",")} size=${imageSize} hasInputImage=${useImageEdit}`,
-  );
+  console.log("[generate-quality] qualities selected", {
+    flowType,
+    qualities,
+    model: IMAGE_MODEL,
+    size: imageSize,
+    mode: useImageEdit ? "edit" : "generate",
+  });
 
   // ── Call OpenAI — one n=1 call per image to support per-image quality ─────
 
@@ -147,7 +152,15 @@ export async function generateProductImage(
     for (let i = 0; i < qualities.length; i++) {
       const quality = qualities[i];
 
-      console.log(`[generate] calling OpenAI image ${i + 1}/${qualities.length} quality=${quality} model=${IMAGE_MODEL} mode=${useImageEdit ? "edit" : "generate"}`);
+      console.log("[generate-quality] calling OpenAI", {
+        flowType,
+        imageIndex: i + 1,
+        totalImages: qualities.length,
+        quality,
+        model: IMAGE_MODEL,
+        size: imageSize,
+        mode: useImageEdit ? "edit" : "generate",
+      });
 
       if (useImageEdit) {
         // Recreate File object each iteration — the underlying buffer is not consumed
