@@ -442,9 +442,9 @@ function Benefits() {
 
 function Pricing() {
   const packages = [
-    { qty: 5, price: "R$ 34,90", perUnit: "R$ 6,98/img" },
-    { qty: 15, price: "R$ 79,90", perUnit: "R$ 5,33/img" },
-    { qty: 30, price: "R$ 129,90", perUnit: "R$ 4,33/img" },
+    { qty: 5, price: "R$ 39,90", perUnit: "R$ 7,98/img" },
+    { qty: 15, price: "R$ 99,90", perUnit: "R$ 6,66/img" },
+    { qty: 30, price: "R$ 159,90", perUnit: "R$ 5,33/img" },
   ];
 
   return (

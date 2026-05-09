@@ -25,25 +25,25 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     planId: "pack_5",
     label: "Pacote 5 imagens",
-    amountCents: 3490,
+    amountCents: 3990,
     productsCount: 5,
     description: "5 imagens • 2 prévias por produto • 1 imagem final por produto",
   },
   {
     planId: "pack_15",
     label: "Pacote 15 imagens",
-    amountCents: 7990,
+    amountCents: 9990,
     productsCount: 15,
     description: "15 imagens • 2 prévias por produto • 1 imagem final por produto",
-    badge: "Mais popular",
+    badge: "Mais vendido",
   },
   {
     planId: "pack_30",
     label: "Pacote 30 imagens",
-    amountCents: 12990,
+    amountCents: 15990,
     productsCount: 30,
     description: "30 imagens • 2 prévias por produto • 1 imagem final por produto",
-    badge: "Melhor valor",
+    badge: "Melhor custo-benefício",
   },
 ];
 
