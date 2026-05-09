@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateProductImage } from "@/services/image.service";
+import { getGenerationQualities } from "@/config/image-generation";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -70,7 +71,8 @@ export async function POST(req: NextRequest) {
       order.prompt,
       session.user.id,
       orderId,
-      order.originalImageKey ?? undefined
+      order.originalImageKey ?? undefined,
+      getGenerationQualities("single"),
     );
 
     // Rename presignedUrl → imageUrl to match the Preview interface in PayClient

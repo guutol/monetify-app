@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getStylePrompt, getPresetName } from "@/lib/prompts";
 import { generateProductImage } from "@/services/image.service";
+import { getGenerationQualities } from "@/config/image-generation";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -108,6 +109,7 @@ export async function POST(req: NextRequest) {
       userId,
       order.id,
       uploadKey ?? undefined,
+      getGenerationQualities("credit"),
     );
 
     return NextResponse.json({

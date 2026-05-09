@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getStylePrompt, getPresetName } from "@/lib/prompts";
 import { generateProductImage, isMockImageEnabled } from "@/services/image.service";
+import { getGenerationQualities } from "@/config/image-generation";
 import { applyWatermark } from "@/lib/watermark";
 import { buildWatermarkKey, uploadRawToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
   let previews: { imageId: string; watermarkUrl: string }[];
 
   try {
-    const result = await generateProductImage(prompt, userId, order.id, uploadKey ?? undefined);
+    const result = await generateProductImage(prompt, userId, order.id, uploadKey ?? undefined, getGenerationQualities("trial"));
 
     // Apply watermarks to each preview
     previews = await Promise.all(

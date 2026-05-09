@@ -3,6 +3,7 @@ import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
 import { extractSizeFromPrompt, stripSizeHint, detectStyleAndPreset } from "@/lib/prompts";
+import { type ImageQuality } from "@/config/image-generation";
 
 // Configurable via OPENAI_IMAGE_MODEL env — defaults to gpt-image-1.5.
 // Accepted values per SDK v6: gpt-image-1.5, gpt-image-1, gpt-image-1-mini.
@@ -62,6 +63,7 @@ export async function generateProductImage(
   userId: string,
   orderId: string,
   originalImageKey?: string,
+  qualities: [ImageQuality, ImageQuality] = ["high", "high"],
 ): Promise<{ previews: ImagePreview[] }> {
   const isMock = isMockImageEnabled();
   const isDev = process.env.NODE_ENV !== "production";
@@ -79,7 +81,7 @@ export async function generateProductImage(
   }
 
   if (isMock) {
-    console.log("[generate] USE_MOCK_IMAGE=true -> using mock provider, skipping OpenAI");
+    console.log(`[generate] USE_MOCK_IMAGE=true -> mock provider (qualities=${qualities.join(",")}, skipping OpenAI)`);
 
     const images = await Promise.all(
       MOCK_IMAGE_URLS.map((url) =>
@@ -115,45 +117,48 @@ export async function generateProductImage(
   console.log("[generate] USE_MOCK_IMAGE=false -> using OpenAI");
   if (isDev) {
     console.log(
-      `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit (with reference)" : "images.generate (text-only)"}`,
+      `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit (with reference)" : "images.generate (text-only)"} qualities=${qualities.join(",")}`,
       originalImageKey ? `key=${originalImageKey}` : "(no key)"
     );
   }
 
-  // ── Call OpenAI ────────────────────────────────────────────────────────────
+  // ── Call OpenAI — one n=1 call per image to support per-image quality ─────
 
-  let rawResults: { b64_json?: string | null }[];
+  const rawResults: { b64_json?: string | null }[] = [];
 
   try {
-    if (useImageEdit) {
-      // images.edit: use the original product image as visual reference.
-      // input_fidelity is supported on gpt-image-1 and gpt-image-1.5+, not on gpt-image-1-mini.
-      const imageFile = await toFile(originalBuffer, "product.png", { type: "image/png" });
+    for (let i = 0; i < qualities.length; i++) {
+      const quality = qualities[i];
 
-      const response = await openai.images.edit({
-        model: IMAGE_MODEL,
-        image: imageFile,
-        prompt: buildEditPrompt(cleanPrompt),
-        n: 2,
-        size: imageSize,
-        quality: "high",
-        input_fidelity: "high",
-      });
+      if (useImageEdit) {
+        // Recreate File object each iteration — the underlying buffer is not consumed
+        // but the File wrapper may be a one-use readable in some SDK versions.
+        const imageFile = await toFile(originalBuffer!, "product.png", { type: "image/png" });
 
-      rawResults = response.data ?? [];
-    } else {
-      // images.generate: text-only fallback (pedidos antigos ou sem imagem de referência)
-      if (isDev) console.log("[generate] calling OpenAI images.generate (n=2)...");
+        const response = await openai.images.edit({
+          model: IMAGE_MODEL,
+          image: imageFile,
+          prompt: buildEditPrompt(cleanPrompt),
+          n: 1,
+          size: imageSize,
+          quality,
+          input_fidelity: "high",
+        });
 
-      const response = await openai.images.generate({
-        model: IMAGE_MODEL,
-        prompt: cleanPrompt,
-        n: 2,
-        size: imageSize,
-        quality: "high",
-      });
+        rawResults.push(...(response.data ?? []));
+      } else {
+        if (isDev) console.log(`[generate] calling OpenAI images.generate (n=1, quality=${quality})...`);
 
-      rawResults = response.data ?? [];
+        const response = await openai.images.generate({
+          model: IMAGE_MODEL,
+          prompt: cleanPrompt,
+          n: 1,
+          size: imageSize,
+          quality,
+        });
+
+        rawResults.push(...(response.data ?? []));
+      }
     }
   } catch (err) {
     if (isDev) console.error("[generate] OpenAI error:", err);
