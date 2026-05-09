@@ -40,8 +40,29 @@ async function fetchOriginalImage(key: string): Promise<Buffer | null> {
   try {
     return await downloadFromS3(key);
   } catch (err) {
-    console.error("[generate] failed to fetch original image from S3:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[generate] failed to fetch original image from S3:", msg);
     return null;
+  }
+}
+
+function logOpenAIError(prefix: string, err: unknown): void {
+  if (err && typeof err === "object") {
+    const e = err as Record<string, unknown>;
+    console.error(prefix, {
+      name:    e["name"],
+      message: e["message"],
+      status:  e["status"],
+      code:    e["code"],
+      type:    e["type"],
+      cause:   e["cause"],
+      // 'error' field = parsed API error body from SDK
+      apiError: e["error"],
+      // headers can appear on APIConnectionError; omit Authorization
+      stack: typeof e["stack"] === "string" ? e["stack"].slice(0, 800) : undefined,
+    });
+  } else {
+    console.error(prefix, String(err));
   }
 }
 
@@ -114,13 +135,9 @@ export async function generateProductImage(
 
   const useImageEdit = originalBuffer !== null;
 
-  console.log("[generate] USE_MOCK_IMAGE=false -> using OpenAI");
-  if (isDev) {
-    console.log(
-      `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit (with reference)" : "images.generate (text-only)"} qualities=${qualities.join(",")}`,
-      originalImageKey ? `key=${originalImageKey}` : "(no key)"
-    );
-  }
+  console.log(
+    `[generate] model=${IMAGE_MODEL} mode=${useImageEdit ? "images.edit" : "images.generate"} qualities=${qualities.join(",")} size=${imageSize} hasInputImage=${useImageEdit}`,
+  );
 
   // ── Call OpenAI — one n=1 call per image to support per-image quality ─────
 
@@ -129,6 +146,8 @@ export async function generateProductImage(
   try {
     for (let i = 0; i < qualities.length; i++) {
       const quality = qualities[i];
+
+      console.log(`[generate] calling OpenAI image ${i + 1}/${qualities.length} quality=${quality} model=${IMAGE_MODEL} mode=${useImageEdit ? "edit" : "generate"}`);
 
       if (useImageEdit) {
         // Recreate File object each iteration — the underlying buffer is not consumed
@@ -145,10 +164,9 @@ export async function generateProductImage(
           input_fidelity: "high",
         });
 
+        console.log(`[generate] OpenAI image ${i + 1} returned ${response.data?.length ?? 0} result(s)`);
         rawResults.push(...(response.data ?? []));
       } else {
-        if (isDev) console.log(`[generate] calling OpenAI images.generate (n=1, quality=${quality})...`);
-
         const response = await openai.images.generate({
           model: IMAGE_MODEL,
           prompt: cleanPrompt,
@@ -157,11 +175,12 @@ export async function generateProductImage(
           quality,
         });
 
+        console.log(`[generate] OpenAI image ${i + 1} returned ${response.data?.length ?? 0} result(s)`);
         rawResults.push(...(response.data ?? []));
       }
     }
   } catch (err) {
-    if (isDev) console.error("[generate] OpenAI error:", err);
+    logOpenAIError("[generate] OpenAI error:", err);
     throw err;
   }
 
@@ -169,7 +188,7 @@ export async function generateProductImage(
     throw new Error("OpenAI não retornou imagens");
   }
 
-  if (isDev) console.log("[generate] OpenAI returned", rawResults.length, "image(s)");
+  console.log("[generate] OpenAI total results:", rawResults.length);
 
   // ── Upload each result to S3 and create DB records ─────────────────────────
 
@@ -190,7 +209,7 @@ export async function generateProductImage(
 
       const s3Key = buildGenerationKey(userId, img.id);
 
-      if (isDev) console.log(`[generate] uploading image ${i + 1} to S3, key:`, s3Key);
+      console.log(`[generate] uploading image ${i + 1} to S3 key=${s3Key}`);
 
       await uploadToS3(base64, s3Key);
 
@@ -202,10 +221,11 @@ export async function generateProductImage(
       const presignedUrl = await getPresignedUrl(s3Key);
       previews.push({ presignedUrl, imageId: img.id });
 
-      if (isDev) console.log(`[generate] image ${i + 1} done — imageId:`, img.id);
+      console.log(`[generate] image ${i + 1} done imageId=${img.id}`);
     }
   } catch (err) {
-    if (isDev) console.error("[generate] upload/db error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[generate] upload/db error:", msg);
     if (createdIds.length > 0) {
       await prisma.generatedImage
         .deleteMany({ where: { id: { in: createdIds } } })
@@ -219,7 +239,7 @@ export async function generateProductImage(
     data: { generationStatus: "COMPLETED" },
   });
 
-  if (isDev) console.log("[generate] all done —", previews.length, "previews ready");
+  console.log("[generate] all done previews=" + previews.length);
 
   return { previews };
 }

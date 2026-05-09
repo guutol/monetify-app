@@ -117,7 +117,8 @@ export async function POST(req: NextRequest) {
       orderId: order.id,
     });
   } catch (err) {
-    if (isDev) console.error("[with-credit] generation failed, refunding credit:", err);
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error(`[with-credit] generation failed for orderId=${order.id}: ${errMsg}`);
 
     // Refund: mark order failed + restore credit + record compensation transaction
     await prisma.$transaction(async (tx) => {
@@ -137,9 +138,12 @@ export async function POST(req: NextRequest) {
           orderId: order.id,
         },
       });
+    }).then(() => {
+      console.log(`[with-credit] credit refunded for orderId=${order.id}`);
     }).catch((refundErr) => {
       // Refund failed — log so ops can identify and fix manually
-      console.error("[with-credit] CRITICAL: refund failed for orderId", order.id, refundErr);
+      const refundMsg = refundErr instanceof Error ? refundErr.message : String(refundErr);
+      console.error(`[with-credit] CRITICAL: refund failed for orderId=${order.id}: ${refundMsg}`);
     });
 
     return NextResponse.json({ error: "Erro ao gerar imagem. Tente novamente." }, { status: 500 });
