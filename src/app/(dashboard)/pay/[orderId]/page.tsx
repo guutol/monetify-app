@@ -134,6 +134,7 @@ export default async function PayPage({
       initialPreviews={initialPreviews}
       isTrial={order.isTrial}
       initialWatermarkedPreviews={initialWatermarkedPreviews}
+      userEmail={session.user.email ?? null}
       isDevEnvironment={
         process.env.NODE_ENV !== "production" &&
         process.env.NEXT_PUBLIC_SHOW_DEV_TOOLS === "true"

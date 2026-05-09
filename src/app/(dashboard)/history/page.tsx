@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getPresignedUrl } from "@/lib/s3";
 import { resolveGenerationLabel } from "@/lib/generation-labels";
+import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("pt-BR", {
@@ -134,6 +135,36 @@ export default async function HistoryPage() {
             Nova imagem
           </Link>
         </div>
+
+        {(() => {
+          const supportUrl = buildSupportWhatsAppUrl({ userEmail: session.user.email });
+          if (!supportUrl && !SUPPORT_EMAIL) return null;
+          return (
+            <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-zinc-800/60 bg-zinc-900/50 px-4 py-3 text-xs text-zinc-500">
+              <span>Problema com alguma imagem ou pagamento?</span>
+              <div className="flex flex-wrap gap-3">
+                {supportUrl && (
+                  <a
+                    href={supportUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-zinc-400 underline-offset-2 transition-colors hover:text-zinc-300 hover:underline"
+                  >
+                    Falar com o suporte
+                  </a>
+                )}
+                {SUPPORT_EMAIL && (
+                  <a
+                    href={`mailto:${SUPPORT_EMAIL}?subject=Suporte Monetify`}
+                    className="text-zinc-400 underline-offset-2 transition-colors hover:text-zinc-300 hover:underline"
+                  >
+                    Enviar e-mail
+                  </a>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {items.length === 0 ? (
           /* ── Empty state ─────────────────────────────────── */

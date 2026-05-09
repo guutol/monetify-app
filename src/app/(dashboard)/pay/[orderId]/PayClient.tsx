@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
 
 interface Preview {
   imageId: string;
@@ -29,6 +30,7 @@ interface Props {
   isTrial: boolean;
   initialWatermarkedPreviews: Preview[];
   isDevEnvironment: boolean;
+  userEmail?: string | null;
 }
 
 type Phase =
@@ -74,6 +76,48 @@ function InvoiceRequestLink({ orderId }: { orderId: string }) {
       >
         Solicitar nota fiscal
       </a>
+    </div>
+  );
+}
+
+function SupportRefundBlock({
+  orderId,
+  imageId,
+  userEmail,
+}: {
+  orderId: string;
+  imageId?: string | null;
+  userEmail?: string | null;
+}) {
+  const whatsappUrl = buildSupportWhatsAppUrl({ orderId, imageId, userEmail });
+  if (!whatsappUrl && !SUPPORT_EMAIL) return null;
+
+  return (
+    <div className="mt-4 border-t border-zinc-800 pt-4">
+      <p className="text-xs font-medium text-zinc-400">Precisa de ajuda com este pedido?</p>
+      <p className="mt-0.5 text-xs text-zinc-600">
+        Se teve problema com pagamento, geração ou download, fale com o suporte.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-3">
+        {whatsappUrl && (
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-zinc-500 underline-offset-2 transition-colors hover:text-zinc-300 hover:underline"
+          >
+            Falar com suporte
+          </a>
+        )}
+        {SUPPORT_EMAIL && (
+          <a
+            href={`mailto:${SUPPORT_EMAIL}?subject=Suporte pedido ${orderId}`}
+            className="text-xs text-zinc-500 underline-offset-2 transition-colors hover:text-zinc-300 hover:underline"
+          >
+            Enviar e-mail
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -295,6 +339,7 @@ function PackagePayUI({
   pixExpiresAt,
   initialPaymentStatus,
   isDevEnvironment,
+  userEmail,
 }: {
   orderId: string;
   amount: number;
@@ -306,6 +351,7 @@ function PackagePayUI({
   pixExpiresAt: string | null;
   initialPaymentStatus: string;
   isDevEnvironment: boolean;
+  userEmail?: string | null;
 }) {
   const router = useRouter();
   const [isPaid, setIsPaid] = useState(initialPaymentStatus === "PAID");
@@ -599,6 +645,7 @@ function PackagePayUI({
                 </a>
               </div>
               <InvoiceRequestLink orderId={orderId} />
+              <SupportRefundBlock orderId={orderId} userEmail={userEmail} />
             </>
           ) : (
             /* ── Pending activation (dev simulation or webhook delay) ────── */
@@ -666,6 +713,7 @@ export function PayClient({
   isTrial,
   initialWatermarkedPreviews,
   isDevEnvironment,
+  userEmail,
 }: Props) {
   // Delegate PACKAGE orders to the dedicated UI
   if (orderType === "PACKAGE") {
@@ -681,6 +729,7 @@ export function PayClient({
         pixExpiresAt={pixExpiresAtProp}
         initialPaymentStatus={initialPaymentStatus}
         isDevEnvironment={isDevEnvironment}
+        userEmail={userEmail}
       />
     );
   }
@@ -1142,6 +1191,7 @@ export function PayClient({
                   Você poderá acompanhar o status da geração.
                 </p>
               </div>
+              <SupportRefundBlock orderId={orderId} userEmail={userEmail} />
             </div>
           </div>
           </>
@@ -1341,6 +1391,7 @@ export function PayClient({
               </a>
             </div>
             <InvoiceRequestLink orderId={orderId} />
+            <SupportRefundBlock orderId={orderId} imageId={imageId} userEmail={userEmail} />
           </div>
         )}
 
@@ -1421,6 +1472,7 @@ export function PayClient({
               >
                 Tentar novamente
               </button>
+              <SupportRefundBlock orderId={orderId} imageId={imageId} userEmail={userEmail} />
             </div>
           </div>
         )}

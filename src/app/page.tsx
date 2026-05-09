@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { UserMenu } from "@/components/UserMenu";
+import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
 
 function Logo({ className = "" }: { className?: string }) {
   return (
@@ -577,14 +578,42 @@ function FinalCTA() {
 // ─── Footer ───────────────────────────────────────────────────────────────────
 
 function Footer() {
+  const whatsappUrl = buildSupportWhatsAppUrl();
+  const hasSupport = !!(whatsappUrl || SUPPORT_EMAIL);
+
   return (
     <footer className="border-t border-zinc-100 bg-white px-4 py-8 sm:px-6">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 text-sm text-zinc-400 sm:flex-row">
-        <span className="flex items-center gap-2 font-semibold text-zinc-900">
-          <Image src="/monetify-logo.png" alt="Monetify" width={20} height={20} className="shrink-0" />
-          Monetify
-        </span>
-        <span>© {new Date().getFullYear()} Monetify. Todos os direitos reservados.</span>
+      <div className="mx-auto max-w-6xl space-y-3 text-sm text-zinc-400 sm:space-y-0">
+        <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <span className="flex items-center gap-2 font-semibold text-zinc-900">
+            <Image src="/monetify-logo.png" alt="Monetify" width={20} height={20} className="shrink-0" />
+            Monetify
+          </span>
+          <span>© {new Date().getFullYear()} Monetify. Todos os direitos reservados.</span>
+        </div>
+        {hasSupport && (
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 pt-2 text-xs text-zinc-400 sm:justify-end sm:pt-0">
+            <span>Dúvidas ou suporte?</span>
+            {whatsappUrl && (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-2 transition-colors hover:text-zinc-600 hover:underline"
+              >
+                Fale pelo WhatsApp
+              </a>
+            )}
+            {SUPPORT_EMAIL && (
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="underline-offset-2 transition-colors hover:text-zinc-600 hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </footer>
   );
