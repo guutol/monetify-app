@@ -548,18 +548,26 @@ function Pricing() {
           Pagamento via PIX. Produtos não expiram. Sem assinatura mensal.
         </p>
         {whatsappUrl && (
-          <p className="mt-3 text-center text-xs text-zinc-400">
-            Algum problema com sua compra ou imagem?{" "}
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline-offset-2 transition-colors hover:text-zinc-600 hover:underline"
-            >
-              Fale com o suporte.
-            </a>
-            {" "}Casos de erro são analisados individualmente.
-          </p>
+          <div className="mx-auto mt-6 flex max-w-sm items-start gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-base">
+              💬
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-zinc-800">Precisa de ajuda?</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
+                Problemas com sua compra ou imagem? Fale com o suporte.
+                <span className="block mt-0.5 text-zinc-400">Casos de erro são analisados individualmente.</span>
+              </p>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
+              >
+                Chamar suporte
+              </a>
+            </div>
+          </div>
         )}
       </div>
     </section>
