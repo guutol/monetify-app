@@ -221,7 +221,7 @@ function TrialPayUI({
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* Watermarked previews */}
           <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className={watermarkedPreviews.length > 1 ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "mx-auto max-w-sm"}>
               {watermarkedPreviews.map((preview, idx) => (
                 <div key={preview.imageId} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
                   <div className="relative">
@@ -235,13 +235,17 @@ function TrialPayUI({
                     />
                   </div>
                   <div className="px-4 py-2.5">
-                    <p className="text-xs text-zinc-500">Prévia {idx + 1} de {watermarkedPreviews.length} — com marca d&apos;água</p>
+                    <p className="text-xs text-zinc-500">
+                      {watermarkedPreviews.length > 1
+                        ? `Prévia ${idx + 1} de ${watermarkedPreviews.length} — com marca d'água`
+                        : "Sua prévia — com marca d'água"}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
             <p className="text-center text-xs text-zinc-600">
-              A imagem final liberada não terá marca d&apos;água. Você escolhe 1 das 2 prévias.
+              A imagem final liberada não terá marca d&apos;água.
             </p>
           </div>
 
@@ -257,8 +261,7 @@ function TrialPayUI({
 
               <div className="mb-5 space-y-2.5">
                 {[
-                  "Imagem final sem marca d'água",
-                  "Você escolhe 1 das 2 prévias geradas",
+                  "Imagem sem marca d'água",
                   "Download imediato após o pagamento",
                 ].map((text, i) => (
                   <div key={i} className="flex items-center gap-2">
@@ -290,7 +293,7 @@ function TrialPayUI({
                     Criando cobrança...
                   </>
                 ) : (
-                  "Liberar por R$ 9,90"
+                  "Desbloquear sem marca por R$ 9,90"
                 )}
               </button>
 
@@ -311,7 +314,7 @@ function TrialPayUI({
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">Próximos passos</p>
               <div className="space-y-3">
-                {["Você paga R$ 9,90 via PIX", "Escolhe 1 das 2 prévias como imagem final", "Baixa a imagem sem marca d'água"].map((text, i) => (
+                {["Você paga R$ 9,90 via PIX", "Baixa a imagem sem marca d'água"].map((text, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">
                       {i + 1}
@@ -833,6 +836,13 @@ export function PayClient({
     return stopPolling;
   }, [phase, orderId, stopPolling, isTrial]);
 
+  // Auto-choose the single image for trial orders — no need to show a selection screen
+  useEffect(() => {
+    if (phase !== "choosing" || !isTrial || previews.length !== 1 || isChoosing) return;
+    handleChoose(previews[0].imageId, previews[0].imageUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, isTrial, previews.length]);
+
   // Schedule local expiry transition when QR has a future expiry
   useEffect(() => {
     if (!pixExpiresAt || phase !== "waiting_payment") return;
@@ -1272,75 +1282,88 @@ export function PayClient({
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {previews.map((preview, idx) => (
-                <div
-                  key={preview.imageId}
-                  className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
-                >
-                  {/* Image with watermark overlay */}
-                  <div className="relative">
-                    <Image
-                      src={preview.imageUrl}
-                      alt={`Prévia ${idx + 1}`}
-                      width={512}
-                      height={512}
-                      className="w-full"
-                      unoptimized
-                    />
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                      <span className="select-none rotate-[-30deg] text-3xl font-bold tracking-widest text-white/20">
-                        PRÉVIA
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card body */}
-                  <div className="p-4">
-                    <p className="mb-3 text-xs text-zinc-500">
-                      Opção {idx + 1} de {previews.length}
-                    </p>
-                    <button
-                      onClick={() => handleChoose(preview.imageId, preview.imageUrl)}
-                      disabled={isChoosing}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isChoosing ? (
-                        <>
-                          <svg
-                            className="h-4 w-4 animate-spin"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                            />
-                          </svg>
-                          Salvando...
-                        </>
-                      ) : (
-                        "Escolher esta imagem"
-                      )}
-                    </button>
-                  </div>
+            {isTrial && previews.length <= 1 ? (
+              <div className="mx-auto max-w-md">
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 py-20">
+                  <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
+                  <p className="mt-5 text-sm font-medium text-zinc-300">
+                    Liberando sua imagem...
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  {previews.map((preview, idx) => (
+                    <div
+                      key={preview.imageId}
+                      className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900"
+                    >
+                      {/* Image with watermark overlay */}
+                      <div className="relative">
+                        <Image
+                          src={preview.imageUrl}
+                          alt={`Prévia ${idx + 1}`}
+                          width={512}
+                          height={512}
+                          className="w-full"
+                          unoptimized
+                        />
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                          <span className="select-none rotate-[-30deg] text-3xl font-bold tracking-widest text-white/20">
+                            PRÉVIA
+                          </span>
+                        </div>
+                      </div>
 
-            <p className="text-center text-xs text-zinc-600">
-              Após escolher, apenas a imagem selecionada ficará disponível para download.
-            </p>
+                      {/* Card body */}
+                      <div className="p-4">
+                        <p className="mb-3 text-xs text-zinc-500">
+                          Opção {idx + 1} de {previews.length}
+                        </p>
+                        <button
+                          onClick={() => handleChoose(preview.imageId, preview.imageUrl)}
+                          disabled={isChoosing}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isChoosing ? (
+                            <>
+                              <svg
+                                className="h-4 w-4 animate-spin"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                />
+                              </svg>
+                              Salvando...
+                            </>
+                          ) : (
+                            "Escolher esta imagem"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-center text-xs text-zinc-600">
+                  Após escolher, apenas a imagem selecionada ficará disponível para download.
+                </p>
+              </>
+            )}
           </div>
         )}
 

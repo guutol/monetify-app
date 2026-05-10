@@ -84,7 +84,7 @@ export async function generateProductImage(
   userId: string,
   orderId: string,
   originalImageKey?: string,
-  qualities: [ImageQuality, ImageQuality] = ["high", "high"],
+  qualities: ImageQuality[] = ["high", "high"],
   flowType = "unknown",
 ): Promise<{ previews: ImagePreview[] }> {
   const isMock = isMockImageEnabled();
@@ -105,8 +105,10 @@ export async function generateProductImage(
   if (isMock) {
     console.log(`[generate] USE_MOCK_IMAGE=true -> mock provider (qualities=${qualities.join(",")}, skipping OpenAI)`);
 
+    const mockUrls = MOCK_IMAGE_URLS.slice(0, qualities.length);
+
     const images = await Promise.all(
-      MOCK_IMAGE_URLS.map((url) =>
+      mockUrls.map((url) =>
         prisma.generatedImage.create({
           data: { userId, orderId, prompt, imageUrl: url },
         })
@@ -122,7 +124,7 @@ export async function generateProductImage(
 
     return {
       previews: images.map((img, i) => ({
-        presignedUrl: MOCK_IMAGE_URLS[i],
+        presignedUrl: mockUrls[i],
         imageId: img.id,
       })),
     };
