@@ -20,21 +20,21 @@ export const PRICING_PLANS: PricingPlan[] = [
     label: "Avulso",
     amountCents: 990,
     productsCount: 1,
-    description: "1 imagem • 2 prévias • escolha 1 imagem final",
+    description: "1 imagem gerada com IA • qualidade alta",
   },
   {
     planId: "pack_5",
     label: "Pacote 5 imagens",
     amountCents: 3990,
     productsCount: 5,
-    description: "5 imagens • 2 prévias por produto • 1 imagem final por produto",
+    description: "5 imagens geradas com IA • qualidade alta",
   },
   {
     planId: "pack_15",
     label: "Pacote 15 imagens",
     amountCents: 9990,
     productsCount: 15,
-    description: "15 imagens • 2 prévias por produto • 1 imagem final por produto",
+    description: "15 imagens geradas com IA • qualidade alta",
     badge: "Mais vendido",
   },
   {
@@ -42,7 +42,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     label: "Pacote 30 imagens",
     amountCents: 15990,
     productsCount: 30,
-    description: "30 imagens • 2 prévias por produto • 1 imagem final por produto",
+    description: "30 imagens geradas com IA • qualidade alta",
     badge: "Melhor custo-benefício",
   },
 ];

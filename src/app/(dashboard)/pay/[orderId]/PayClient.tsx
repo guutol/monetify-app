@@ -836,12 +836,12 @@ export function PayClient({
     return stopPolling;
   }, [phase, orderId, stopPolling, isTrial]);
 
-  // Auto-choose the single image for trial orders — no need to show a selection screen
+  // Auto-choose when there's only 1 image — no selection screen needed
   useEffect(() => {
-    if (phase !== "choosing" || !isTrial || previews.length !== 1 || isChoosing) return;
+    if (phase !== "choosing" || previews.length !== 1 || isChoosing) return;
     handleChoose(previews[0].imageId, previews[0].imageUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, isTrial, previews.length]);
+  }, [phase, previews.length]);
 
   // Schedule local expiry transition when QR has a future expiry
   useEffect(() => {
@@ -976,10 +976,10 @@ export function PayClient({
     trial_previews: "",
     waiting_payment:
       "Após a confirmação do pagamento, sua imagem será gerada automaticamente.",
-    paid_ready: "Clique abaixo para gerar suas 2 prévias com IA.",
+    paid_ready: "Clique abaixo para gerar sua imagem com IA.",
     generating: "Isso pode levar até 60 segundos. Não feche esta página.",
     choosing:
-      "Selecione 1 das 2 prévias geradas. Apenas a imagem escolhida ficará disponível para download.",
+      "Selecione sua imagem final. Apenas a imagem escolhida ficará disponível para download.",
     done: "Seu resultado está pronto para download.",
     expired: "O código PIX expirou. Crie uma nova cobrança para continuar.",
     failed: "Houve um problema ao gerar sua imagem.",
@@ -1052,7 +1052,7 @@ export function PayClient({
                     {formatAmount(amount)}
                   </span>
                   <span className="text-sm text-zinc-500">
-                    2 prévias geradas por IA
+                    imagem gerada por IA
                   </span>
                 </div>
               </div>
@@ -1065,8 +1065,8 @@ export function PayClient({
                 <div className="space-y-4">
                   {[
                     "Você finaliza o pagamento",
-                    "A IA gera 2 prévias da sua imagem",
-                    "Você escolhe 1 prévia como resultado final",
+                    "A IA gera sua imagem",
+                    "Você baixa a imagem gerada",
                   ].map((text, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">
@@ -1239,7 +1239,7 @@ export function PayClient({
                 Pagamento confirmado!
               </p>
               <p className="mt-1 text-xs text-emerald-300/70">
-                Clique abaixo para gerar suas 2 prévias com IA.
+                Clique abaixo para gerar sua imagem com IA.
               </p>
             </div>
 
@@ -1253,7 +1253,7 @@ export function PayClient({
               onClick={handleGenerate}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-4 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
             >
-              Gerar 2 prévias
+              Gerar imagem
             </button>
           </div>
         )}
@@ -1264,7 +1264,7 @@ export function PayClient({
             <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 py-20">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
               <p className="mt-5 text-sm font-medium text-zinc-300">
-                Gerando 2 prévias com IA...
+                Gerando sua imagem com IA...
               </p>
               <p className="mt-2 text-xs text-zinc-500">
                 Isso pode levar até 60 segundos
@@ -1282,7 +1282,7 @@ export function PayClient({
               </div>
             )}
 
-            {isTrial && previews.length <= 1 ? (
+            {previews.length <= 1 ? (
               <div className="mx-auto max-w-md">
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 py-20">
                   <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />

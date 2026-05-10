@@ -823,7 +823,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
                     <div>
                       <span className="text-3xl font-bold text-white">R$ 9,90</span>
                       <p className="mt-1 text-xs text-zinc-400">
-                        2 prévias geradas • escolha 1 imagem final
+                        Imagem gerada com IA • qualidade alta
                       </p>
                       <p className="mt-0.5 text-xs text-zinc-500">
                         Pagamento único, sem assinatura.
