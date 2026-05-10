@@ -209,21 +209,23 @@ function TrialPayUI({
         </a>
 
         <div className="mb-8 mt-6">
-          <p className="text-sm font-semibold text-emerald-400">Monetify</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white">
-            Sua prévia está pronta!
+          <span className="inline-block rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+            Prévia grátis gerada com IA
+          </span>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Sua prévia está pronta
           </h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Gostou do resultado? Pague R$ 9,90 para liberar a imagem final sem marca d&apos;água.
+            Desbloqueie a imagem sem marca d&apos;água e use no seu anúncio, marketplace ou loja.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* Watermarked previews */}
           <div className="space-y-4">
-            <div className={watermarkedPreviews.length > 1 ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "mx-auto max-w-sm"}>
+            <div className={watermarkedPreviews.length > 1 ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "mx-auto max-w-md"}>
               {watermarkedPreviews.map((preview, idx) => (
-                <div key={preview.imageId} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+                <div key={preview.imageId} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/40">
                   <div className="relative">
                     <Image
                       src={preview.imageUrl}
@@ -233,26 +235,26 @@ function TrialPayUI({
                       className="w-full"
                       unoptimized
                     />
-                  </div>
-                  <div className="px-4 py-2.5">
-                    <p className="text-xs text-zinc-500">
-                      {watermarkedPreviews.length > 1
-                        ? `Prévia ${idx + 1} de ${watermarkedPreviews.length} — com marca d'água`
-                        : "Sua prévia — com marca d'água"}
-                    </p>
+                    <div className="absolute left-3 top-3">
+                      <span className="rounded-full border border-zinc-700/60 bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-zinc-400 backdrop-blur-sm">
+                        {watermarkedPreviews.length > 1
+                          ? `Prévia ${idx + 1} de ${watermarkedPreviews.length}`
+                          : "Prévia com marca"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
             <p className="text-center text-xs text-zinc-600">
-              A imagem final liberada não terá marca d&apos;água.
+              Após o pagamento, a marca d&apos;água é removida e a imagem fica disponível para download.
             </p>
           </div>
 
           {/* Payment panel */}
           <div className="flex flex-col gap-4">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl shadow-black/30">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Liberar imagem</p>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Desbloquear imagem</p>
 
               <div className="mb-5">
                 <span className="text-3xl font-bold text-white">R$ 9,90</span>
@@ -263,6 +265,7 @@ function TrialPayUI({
                 {[
                   "Imagem sem marca d'água",
                   "Download imediato após o pagamento",
+                  "Uso livre no seu anúncio ou loja",
                 ].map((text, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-emerald-400">
@@ -472,7 +475,7 @@ function PackagePayUI({
               Finalize seu pagamento
             </h1>
             <p className="mt-2 text-sm text-zinc-400">
-              Após a confirmação, seus produtos disponíveis são ativados automaticamente.
+              Após a confirmação, suas imagens são adicionadas à sua conta automaticamente.
             </p>
           </div>
 
@@ -491,10 +494,10 @@ function PackagePayUI({
               {/* Package order card */}
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
                 <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-zinc-500">Seu pacote</p>
-                <p className="text-sm font-semibold text-zinc-200">{planLabel || "Pacote de produtos"}</p>
+                <p className="text-sm font-semibold text-zinc-200">{planLabel || "Pacote de imagens"}</p>
                 {productsCount > 0 && (
                   <p className="mt-1 text-xs text-zinc-500">
-                    +{productsCount} {productsCount === 1 ? "produto disponível" : "produtos disponíveis"} após o pagamento
+                    +{productsCount} {productsCount === 1 ? "imagem" : "imagens"} adicionadas após o pagamento
                   </p>
                 )}
                 <div className="mt-4 flex items-baseline gap-1.5">
@@ -509,8 +512,8 @@ function PackagePayUI({
                 <div className="space-y-4">
                   {[
                     "Você finaliza o pagamento",
-                    `Seus ${productsCount > 0 ? productsCount : ""} produtos disponíveis são ativados`,
-                    "Você gera imagens quando quiser, sem pagar de novo",
+                    `Suas ${productsCount > 0 ? productsCount : ""} imagens são adicionadas à sua conta`,
+                    "Você gera quando quiser, sem pagar de novo",
                   ].map((text, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-xs font-bold text-emerald-400">
@@ -626,13 +629,13 @@ function PackagePayUI({
                 </div>
                 <h2 className="text-xl font-bold text-white">Pacote ativado!</h2>
                 <p className="mt-2 text-sm text-zinc-400">
-                  Seus produtos disponíveis já foram adicionados à sua conta.
+                  Suas imagens já foram adicionadas à sua conta.
                 </p>
                 {productsCount > 0 && (
                   <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
                     <span className="text-lg font-bold text-emerald-400">+{productsCount}</span>
                     <span className="text-sm text-emerald-300">
-                      {productsCount === 1 ? "produto disponível" : "produtos disponíveis"}
+                      {productsCount === 1 ? "imagem disponível" : "imagens disponíveis"}
                     </span>
                   </div>
                 )}
@@ -666,13 +669,13 @@ function PackagePayUI({
                 </div>
                 <h2 className="text-xl font-bold text-white">Pagamento confirmado</h2>
                 <p className="mt-2 text-sm text-zinc-400">
-                  Estamos ativando seus produtos disponíveis. Isso pode levar alguns instantes.
+                  Estamos adicionando suas imagens à conta. Isso pode levar alguns instantes.
                 </p>
 
                 {isDevEnvironment && (
                   <p className="mt-4 text-xs leading-relaxed text-zinc-600">
-                    Este pagamento foi marcado manualmente em desenvolvimento. Os produtos disponíveis
-                    só são adicionados quando o webhook for processado.
+                    Pagamento marcado manualmente em desenvolvimento. As imagens
+                    só são adicionadas quando o webhook for processado.
                   </p>
                 )}
               </div>
@@ -963,24 +966,22 @@ export function PayClient({
 
   const PHASE_TITLE: Record<Phase, string> = {
     trial_previews: "",
-    waiting_payment: "Finalize seu pagamento",
+    waiting_payment: "Finalize o pagamento via PIX",
     paid_ready: "Pagamento confirmado!",
-    generating: "Gerando suas prévias...",
-    choosing: "Escolha sua imagem final",
-    done: "Imagem gerada com sucesso!",
+    generating: "Gerando sua imagem...",
+    choosing: "Preparando sua imagem...",
+    done: "Imagem liberada",
     expired: "Cobrança expirada",
     failed: "Falha na geração",
   };
 
   const PHASE_SUBTITLE: Record<Phase, string> = {
     trial_previews: "",
-    waiting_payment:
-      "Após a confirmação do pagamento, sua imagem será gerada automaticamente.",
+    waiting_payment: "Após confirmar o PIX, sua imagem será gerada e entregue.",
     paid_ready: "Clique abaixo para gerar sua imagem com IA.",
     generating: "Isso pode levar até 60 segundos. Não feche esta página.",
-    choosing:
-      "Selecione sua imagem final. Apenas a imagem escolhida ficará disponível para download.",
-    done: "Seu resultado está pronto para download.",
+    choosing: "",
+    done: "Sua imagem sem marca d'água está pronta para baixar.",
     expired: "O código PIX expirou. Crie uma nova cobrança para continuar.",
     failed: "Houve um problema ao gerar sua imagem.",
   };
@@ -1264,7 +1265,7 @@ export function PayClient({
             <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 py-20">
               <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
               <p className="mt-5 text-sm font-medium text-zinc-300">
-                Gerando sua imagem com IA...
+                Gerando sua imagem em alta qualidade...
               </p>
               <p className="mt-2 text-xs text-zinc-500">
                 Isso pode levar até 60 segundos
@@ -1287,7 +1288,7 @@ export function PayClient({
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900 py-20">
                   <div className="h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-emerald-500" />
                   <p className="mt-5 text-sm font-medium text-zinc-300">
-                    Liberando sua imagem...
+                    Preparando sua imagem...
                   </p>
                 </div>
               </div>
@@ -1370,15 +1371,9 @@ export function PayClient({
         {/* ── done ────────────────────────────────────────── */}
         {phase === "done" && (
           <div className="mx-auto max-w-2xl space-y-5">
-            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-4">
-              <p className="text-sm font-semibold text-emerald-400">
-                Imagem escolhida e pronta para download!
-              </p>
-            </div>
-
             {imageUrl ? (
-              <div className="space-y-3">
-                <div className="overflow-hidden rounded-2xl border border-zinc-800">
+              <div className="space-y-4">
+                <div className="overflow-hidden rounded-2xl border border-zinc-800 shadow-xl shadow-black/40">
                   <Image
                     src={imageUrl}
                     alt="Imagem gerada"
@@ -1390,8 +1385,13 @@ export function PayClient({
                 </div>
                 <a
                   href={imageId ? `/api/images/${imageId}/download` : imageUrl}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-emerald-500/20 transition-all hover:bg-emerald-600 active:scale-[0.98]"
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
                   Baixar imagem
                 </a>
               </div>
@@ -1414,7 +1414,7 @@ export function PayClient({
               </a>
               <a
                 href="/generate"
-                className="flex-1 rounded-xl bg-emerald-500 px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-emerald-600"
+                className="flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-4 py-3 text-center text-sm font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
               >
                 Gerar outra imagem
               </a>
