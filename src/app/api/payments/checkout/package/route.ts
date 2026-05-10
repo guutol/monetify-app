@@ -38,9 +38,7 @@ export async function POST(req: NextRequest) {
   const userId = session.user.id;
   const userEmail = session.user.email ?? "cliente@monetify.com.br";
 
-  if (isDev) {
-    console.log(`[checkout/package] planId=${planId} | amount=${plan.amountCents} | products=${plan.productsCount}`);
-  }
+  console.log(`[checkout/package] planId=${planId} | amountCents=${plan.amountCents} | transactionAmount=${plan.amountCents / 100} | products=${plan.productsCount}`);
 
   // Criar Order em estado PENDING antes de chamar AbacatePay
   const order = await prisma.order.create({
@@ -75,7 +73,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (isDev) console.log("[checkout/package] MP OK, paymentId:", pixData.paymentId);
+    console.log(`[checkout/package] PIX criado orderId=${order.id} paymentId=${pixData.paymentId}`);
 
     return NextResponse.json({
       orderId: order.id,
@@ -88,7 +86,8 @@ export async function POST(req: NextRequest) {
       productsCount: plan.productsCount,
     });
   } catch (err) {
-    if (isDev) console.error("[checkout/package] Mercado Pago error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[checkout/package] PIX falhou orderId=${order.id} planId=${planId}: ${msg}`);
 
     await prisma.order.update({
       where: { id: order.id },

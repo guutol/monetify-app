@@ -59,6 +59,13 @@ export async function POST(req: NextRequest) {
   }
 
   // Create PIX charge
+  console.log("[trial-unlock] criando PIX", {
+    orderId,
+    amountCents: PRICE_PER_GENERATION_CENTS,
+    transactionAmount: PRICE_PER_GENERATION_CENTS / 100,
+    payerEmail: userEmail,
+  });
+
   try {
     const pixData = await createPixPayment({
       amountCents: PRICE_PER_GENERATION_CENTS,
@@ -84,9 +91,8 @@ export async function POST(req: NextRequest) {
       amount: PRICE_PER_GENERATION_CENTS,
     });
   } catch (err) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("[trial-unlock] Mercado Pago error:", err);
-    }
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[trial-unlock] PIX falhou orderId=${orderId}: ${msg}`);
     return NextResponse.json({ error: "Erro ao criar cobrança. Tente novamente." }, { status: 502 });
   }
 }

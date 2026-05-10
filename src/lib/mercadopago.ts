@@ -7,6 +7,30 @@ function getPaymentClient(): Payment {
   return new Payment(client);
 }
 
+function tokenType(): string {
+  const t = process.env.MERCADOPAGO_ACCESS_TOKEN ?? "";
+  if (!t) return "MISSING";
+  if (t.startsWith("TEST-")) return "TEST";
+  if (t.startsWith("APP_USR-")) return "APP_USR";
+  return "UNKNOWN";
+}
+
+function logMpError(prefix: string, err: unknown): void {
+  if (err && typeof err === "object") {
+    const e = err as Record<string, unknown>;
+    console.error(prefix, {
+      status:   e["status"],
+      message:  e["message"],
+      cause:    e["cause"],
+      error:    e["error"],
+      response: e["response"],
+      stack: typeof e["stack"] === "string" ? e["stack"].slice(0, 800) : undefined,
+    });
+  } else {
+    console.error(prefix, String(err));
+  }
+}
+
 export interface PixPaymentResult {
   paymentId: string;
   brCode: string;
@@ -26,25 +50,52 @@ export async function createPixPayment(opts: {
   const payment = getPaymentClient();
 
   const expiresAt = new Date(Date.now() + PIX_TTL_MS);
+  const transactionAmount = opts.amountCents / 100;
 
-  const result = await payment.create({
-    body: {
-      transaction_amount: opts.amountCents / 100,
-      payment_method_id: "pix",
-      payer: { email: opts.payerEmail },
-      external_reference: opts.orderId,
-      description: opts.description,
-      date_of_expiration: expiresAt.toISOString(),
-    },
-    requestOptions: { idempotencyKey: opts.orderId },
+  console.log("[mercadopago] createPixPayment", {
+    orderId:           opts.orderId,
+    amountCents:       opts.amountCents,
+    transactionAmount,
+    payerEmail:        opts.payerEmail,
+    tokenType:         tokenType(),
+    dateOfExpiration:  expiresAt.toISOString(),
   });
+
+  let result;
+  try {
+    result = await payment.create({
+      body: {
+        transaction_amount: transactionAmount,
+        payment_method_id: "pix",
+        payer: { email: opts.payerEmail },
+        external_reference: opts.orderId,
+        description: opts.description,
+        date_of_expiration: expiresAt.toISOString(),
+      },
+      requestOptions: { idempotencyKey: opts.orderId },
+    });
+  } catch (err) {
+    logMpError("[mercadopago] payment.create error:", err);
+    throw err;
+  }
 
   const txData = result.point_of_interaction?.transaction_data;
   const qrCode = txData?.qr_code;
 
   if (!result.id || !qrCode) {
+    console.error("[mercadopago] resposta sem id/qrCode:", {
+      id: result.id,
+      status: result.status,
+      statusDetail: result.status_detail,
+    });
     throw new Error("Mercado Pago: resposta inválida ou QR Code PIX não disponível");
   }
+
+  console.log("[mercadopago] payment criado:", {
+    paymentId: result.id,
+    status: result.status,
+    statusDetail: result.status_detail,
+  });
 
   const rawBase64 = txData?.qr_code_base64 ?? "";
   const brCodeBase64 = rawBase64 ? `data:image/png;base64,${rawBase64}` : "";

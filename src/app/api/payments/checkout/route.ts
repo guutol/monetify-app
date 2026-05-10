@@ -70,6 +70,13 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  console.log("[checkout] criando PIX", {
+    orderId: order.id,
+    amountCents: PRICE_PER_GENERATION_CENTS,
+    transactionAmount: PRICE_PER_GENERATION_CENTS / 100,
+    payerEmail: userEmail,
+  });
+
   try {
     const pixData = await createPixPayment({
       amountCents: PRICE_PER_GENERATION_CENTS,
@@ -96,7 +103,8 @@ export async function POST(req: NextRequest) {
       amount: PRICE_PER_GENERATION_CENTS,
     });
   } catch (err) {
-    if (isDev) console.error("[checkout] Mercado Pago error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[checkout] PIX falhou orderId=${order.id}: ${msg}`);
 
     await prisma.order.update({
       where: { id: order.id },
