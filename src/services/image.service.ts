@@ -84,7 +84,7 @@ export async function generateProductImage(
   userId: string,
   orderId: string,
   originalImageKey?: string,
-  qualities: ImageQuality[] = ["high", "high"],
+  qualities: ImageQuality[] = ["high"],
   flowType = "unknown",
 ): Promise<{ previews: ImagePreview[] }> {
   const isMock = isMockImageEnabled();
