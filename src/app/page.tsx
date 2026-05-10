@@ -441,6 +441,7 @@ function Benefits() {
 // ─── Preço ────────────────────────────────────────────────────────────────────
 
 function Pricing() {
+  const whatsappUrl = buildSupportWhatsAppUrl();
   const packages = [
     { qty: 5, price: "R$ 39,90", perUnit: "R$ 7,98/img" },
     { qty: 15, price: "R$ 99,90", perUnit: "R$ 6,66/img" },
@@ -546,6 +547,20 @@ function Pricing() {
         <p className="mt-6 text-center text-xs text-zinc-400">
           Pagamento via PIX. Produtos não expiram. Sem assinatura mensal.
         </p>
+        {whatsappUrl && (
+          <p className="mt-3 text-center text-xs text-zinc-400">
+            Algum problema com sua compra ou imagem?{" "}
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-2 transition-colors hover:text-zinc-600 hover:underline"
+            >
+              Fale com o suporte.
+            </a>
+            {" "}Casos de erro são analisados individualmente.
+          </p>
+        )}
       </div>
     </section>
   );

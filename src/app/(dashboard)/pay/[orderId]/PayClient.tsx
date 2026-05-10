@@ -128,11 +128,13 @@ function TrialPayUI({
   orderId,
   watermarkedPreviews,
   isDevEnvironment,
+  userEmail,
   onUnlocked,
 }: {
   orderId: string;
   watermarkedPreviews: Preview[];
   isDevEnvironment: boolean;
+  userEmail?: string | null;
   onUnlocked: (pixBrCode: string, pixBrCodeBase64: string, pixExpiresAt: string | null) => void;
 }) {
   const [unlocking, setUnlocking] = useState(false);
@@ -319,6 +321,8 @@ function TrialPayUI({
                 ))}
               </div>
             </div>
+
+            <SupportRefundBlock orderId={orderId} userEmail={userEmail} />
           </div>
         </div>
       </div>
@@ -583,6 +587,7 @@ function PackagePayUI({
                   <p className="mt-1 text-center text-xs text-zinc-600">Apenas em desenvolvimento</p>
                 </div>
               )}
+              <SupportRefundBlock orderId={orderId} userEmail={userEmail} />
             </div>
           </div>
         </div>
@@ -940,6 +945,7 @@ export function PayClient({
         orderId={orderId}
         watermarkedPreviews={initialWatermarkedPreviews.length > 0 ? initialWatermarkedPreviews : previews}
         isDevEnvironment={isDevEnvironment}
+        userEmail={userEmail}
         onUnlocked={handleTrialUnlocked}
       />
     );
