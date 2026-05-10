@@ -548,25 +548,23 @@ function Pricing() {
           Pagamento via PIX. Produtos não expiram. Sem assinatura mensal.
         </p>
         {whatsappUrl && (
-          <div className="mx-auto mt-6 flex max-w-sm items-start gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-base">
-              💬
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-zinc-800">Precisa de ajuda?</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">
-                Problemas com sua compra ou imagem? Fale com o suporte.
-                <span className="block mt-0.5 text-zinc-400">Casos de erro são analisados individualmente.</span>
+          <div className="mx-auto mt-4 flex max-w-sm items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
+            <span className="shrink-0 text-lg leading-none">💬</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-zinc-700">Precisa de ajuda?</p>
+              <p className="text-xs text-zinc-500">
+                Problemas com sua compra ou imagem? Fale com o suporte.{" "}
+                <span className="text-zinc-400">Casos de erro são analisados individualmente.</span>
               </p>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-100"
-              >
-                Chamar suporte
-              </a>
             </div>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-600 transition-colors hover:border-zinc-400 hover:text-zinc-800"
+            >
+              Chamar suporte
+            </a>
           </div>
         )}
       </div>
