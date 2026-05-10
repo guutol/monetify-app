@@ -9,7 +9,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 // "single" é fluxo avulso — não aceito aqui
 const schema = z.object({
-  planId: z.enum(["pack_5", "pack_15", "pack_30"]),
+  planId: z.enum(["pack_5", "pack_10", "pack_20"]),
 });
 
 export async function POST(req: NextRequest) {

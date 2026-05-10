@@ -3,7 +3,7 @@ export const PRICE_PER_GENERATION_CENTS = 990;
 
 // ── Definição de planos ────────────────────────────────────────────────────────
 
-export type PlanId = "single" | "pack_5" | "pack_15" | "pack_30";
+export type PlanId = "single" | "pack_5" | "pack_10" | "pack_20";
 
 export interface PricingPlan {
   planId: PlanId;
@@ -24,29 +24,39 @@ export const PRICING_PLANS: PricingPlan[] = [
   },
   {
     planId: "pack_5",
-    label: "Pacote 5 imagens",
+    label: "Começar",
     amountCents: 3990,
     productsCount: 5,
-    description: "5 imagens geradas com IA • qualidade alta",
+    description: "Ideal para testar com poucos produtos",
   },
   {
-    planId: "pack_15",
-    label: "Pacote 15 imagens",
-    amountCents: 9990,
-    productsCount: 15,
-    description: "15 imagens geradas com IA • qualidade alta",
+    planId: "pack_10",
+    label: "Vendedor",
+    amountCents: 6990,
+    productsCount: 10,
+    description: "Melhor custo-benefício para vendedores",
     badge: "Mais vendido",
   },
   {
-    planId: "pack_30",
-    label: "Pacote 30 imagens",
-    amountCents: 15990,
-    productsCount: 30,
-    description: "30 imagens geradas com IA • qualidade alta",
-    badge: "Melhor custo-benefício",
+    planId: "pack_20",
+    label: "Loja",
+    amountCents: 11990,
+    productsCount: 20,
+    description: "Para lojas com mais produtos no catálogo",
   },
 ];
 
-export function getPlanById(planId: PlanId): PricingPlan | undefined {
-  return PRICING_PLANS.find((p) => p.planId === planId);
+// Legacy plan data — não oferecidos na UI, apenas para exibição de pedidos antigos
+const LEGACY_PLAN_DATA: Record<string, { label: string; productsCount: number }> = {
+  pack_15: { label: "Pacote 15 imagens", productsCount: 15 },
+  pack_30: { label: "Pacote 30 imagens", productsCount: 30 },
+};
+
+export function getPlanById(planId: string): PricingPlan | undefined {
+  const found = PRICING_PLANS.find((p) => p.planId === planId);
+  if (found) return found;
+  const legacy = LEGACY_PLAN_DATA[planId];
+  if (!legacy) return undefined;
+  // Retorna shape mínimo para exibição de pedidos antigos (amount=0 — não usado para cobranças)
+  return { planId: planId as PlanId, ...legacy, amountCents: 0, description: "" };
 }

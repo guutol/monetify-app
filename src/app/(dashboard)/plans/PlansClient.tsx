@@ -31,7 +31,7 @@ export function PlansClient({ initialCredits }: Props) {
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handlePackagePurchase(planId: "pack_5" | "pack_15" | "pack_30") {
+  async function handlePackagePurchase(planId: "pack_5" | "pack_10" | "pack_20") {
     if (loadingPlanId) return;
     setError(null);
     setLoadingPlanId(planId);
@@ -143,28 +143,22 @@ export function PlansClient({ initialCredits }: Props) {
         {packages.map((plan) => {
           const pct = savingsPct(plan);
           const isLoading = loadingPlanId === plan.planId;
-          const isBestValue = plan.planId === "pack_30";
-          const isMostChosen = plan.planId === "pack_15";
+          const isFeatured = plan.planId === "pack_10";
 
           return (
             <div
               key={plan.planId}
               className={`flex min-w-0 flex-col rounded-2xl border p-5 ${
-                isBestValue
+                isFeatured
                   ? "border-emerald-500/40 bg-emerald-500/5 ring-1 ring-emerald-500/20"
                   : "border-zinc-800 bg-zinc-900"
               }`}
             >
               <div className="mb-1 flex min-w-0 items-start justify-between gap-2">
                 <p className="min-w-0 truncate text-sm font-bold text-zinc-100">{plan.label}</p>
-                {isMostChosen && (
+                {isFeatured && (
                   <span className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
-                    Popular
-                  </span>
-                )}
-                {isBestValue && (
-                  <span className="shrink-0 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-400">
-                    Melhor valor
+                    Mais vendido
                   </span>
                 )}
               </div>
@@ -187,9 +181,9 @@ export function PlansClient({ initialCredits }: Props) {
               <button
                 type="button"
                 disabled={!!loadingPlanId}
-                onClick={() => handlePackagePurchase(plan.planId as "pack_5" | "pack_15" | "pack_30")}
+                onClick={() => handlePackagePurchase(plan.planId as "pack_5" | "pack_10" | "pack_20")}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all ${
-                  isBestValue
+                  isFeatured
                     ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 hover:bg-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                     : "border border-zinc-700 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 }`}
