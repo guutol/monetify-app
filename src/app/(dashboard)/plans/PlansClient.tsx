@@ -97,7 +97,7 @@ export function PlansClient({ initialCredits }: Props) {
           Você tem{" "}
           <span className="font-bold text-white">
             {initialCredits}{" "}
-            {pluralize(initialCredits, "produto disponível", "produtos disponíveis")}
+            {pluralize(initialCredits, "imagem disponível", "imagens disponíveis")}
           </span>
           {initialCredits > 0 && (
             <>
@@ -118,17 +118,23 @@ export function PlansClient({ initialCredits }: Props) {
       )}
 
       {/* Plan cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-stretch">
         {/* Avulso */}
         <div className="flex min-w-0 flex-col rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-          <div className="mb-1 flex items-start justify-between gap-2">
+          <div className="mb-3 flex items-start justify-between gap-2">
             <p className="text-sm font-bold text-zinc-100">{single.label}</p>
           </div>
+
+          <p className="mb-3 leading-none">
+            <span className="text-3xl font-bold text-white">1</span>
+            <span className="ml-1.5 text-base font-semibold text-zinc-300">imagem</span>
+          </p>
+
           <p className="mb-4 text-xs text-zinc-500">{single.description}</p>
 
           <div className="mb-5 mt-auto">
             <span className="text-2xl font-bold text-white">{formatBRL(single.amountCents)}</span>
-            <p className="mt-0.5 text-xs text-zinc-500">por produto</p>
+            <span className="ml-1.5 text-xs text-zinc-500">por imagem</span>
           </div>
 
           <Link
@@ -154,7 +160,7 @@ export function PlansClient({ initialCredits }: Props) {
                   : "border-zinc-800 bg-zinc-900"
               }`}
             >
-              <div className="mb-1 flex min-w-0 items-start justify-between gap-2">
+              <div className="mb-3 flex min-w-0 items-start justify-between gap-2">
                 <p className="min-w-0 truncate text-sm font-bold text-zinc-100">{plan.label}</p>
                 {isFeatured && (
                   <span className="shrink-0 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
@@ -163,18 +169,23 @@ export function PlansClient({ initialCredits }: Props) {
                 )}
               </div>
 
+              <p className="mb-3 leading-none">
+                <span className="text-3xl font-bold text-white">{plan.productsCount}</span>
+                <span className="ml-1.5 text-base font-semibold text-zinc-300">imagens</span>
+              </p>
+
               <p className="mb-1 text-xs text-zinc-500">{plan.description}</p>
 
               {pct > 0 && (
                 <p className="mb-4 text-xs font-semibold text-emerald-400">
-                  Economize {pct}% por produto
+                  Economize {pct}% por imagem
                 </p>
               )}
 
               <div className="mb-5 mt-auto">
                 <span className="text-2xl font-bold text-white">{formatBRL(plan.amountCents)}</span>
                 <span className="ml-1.5 text-xs text-zinc-500">
-                  ({formatBRL(Math.round(plan.amountCents / plan.productsCount))}/produto)
+                  ({formatBRL(Math.round(plan.amountCents / plan.productsCount))}/imagem)
                 </span>
               </div>
 
@@ -222,8 +233,11 @@ export function PlansClient({ initialCredits }: Props) {
       </div>
 
       {/* Fine print */}
-      <p className="mt-6 text-center text-xs text-zinc-600">
-        Pagamento via PIX. Sem assinatura. Produtos disponíveis não expiram.
+      <p className="mt-5 text-center text-xs font-semibold text-zinc-500">
+        1 crédito = 1 imagem
+      </p>
+      <p className="mt-1.5 text-center text-xs text-zinc-600">
+        Pagamento via PIX · Sem assinatura · Imagens não expiram
       </p>
     </div>
   );

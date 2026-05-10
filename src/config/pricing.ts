@@ -20,7 +20,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     label: "Avulso",
     amountCents: 990,
     productsCount: 1,
-    description: "1 imagem gerada com IA • qualidade alta",
+    description: "Ideal para testar com um produto",
   },
   {
     planId: "pack_5",

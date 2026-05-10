@@ -404,7 +404,7 @@ const BENEFITS = [
   {
     icon: "📦",
     title: "Pacotes para quem vende com frequência",
-    desc: "De avulso a pacotes de 30 imagens. Quanto mais você gera, menor o custo por imagem.",
+    desc: "De avulso a pacotes de 20 imagens. Quanto mais você gera, menor o custo por imagem.",
   },
 ];
 
@@ -443,9 +443,9 @@ function Benefits() {
 function Pricing() {
   const whatsappUrl = buildSupportWhatsAppUrl();
   const packages = [
-    { qty: 5, price: "R$ 39,90", perUnit: "R$ 7,98/img" },
-    { qty: 15, price: "R$ 99,90", perUnit: "R$ 6,66/img" },
-    { qty: 30, price: "R$ 159,90", perUnit: "R$ 5,33/img" },
+    { qty: 5,  price: "R$ 39,90",  perUnit: "R$ 7,98/img" },
+    { qty: 10, price: "R$ 69,90",  perUnit: "R$ 6,99/img" },
+    { qty: 20, price: "R$ 119,90", perUnit: "R$ 5,99/img" },
   ];
 
   return (
