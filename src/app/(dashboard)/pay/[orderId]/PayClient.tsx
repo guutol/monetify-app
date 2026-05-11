@@ -783,6 +783,8 @@ export function PayClient({
   const [copied, setCopied] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [simulateError, setSimulateError] = useState<string | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -985,6 +987,32 @@ export function PayClient({
     expired: "O código PIX expirou. Crie uma nova cobrança para continuar.",
     failed: "Houve um problema ao gerar sua imagem.",
   };
+
+  async function handleShareImage(downloadUrl: string) {
+    if (shareLoading) return;
+    setShareLoading(true);
+    setShareError(null);
+    try {
+      const res = await fetch(downloadUrl);
+      if (!res.ok) throw new Error("fetch_failed");
+      const blob = await res.blob();
+      const file = new File([blob], "monetify-imagem.png", { type: "image/png" });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Imagem Monetify",
+          text: "Imagem gerada no Monetify",
+        });
+      } else {
+        window.location.href = downloadUrl;
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setShareError("Não foi possível abrir o compartilhamento. Use o botão de download.");
+    } finally {
+      setShareLoading(false);
+    }
+  }
 
   return (
     <div className="-m-8 min-h-screen overflow-x-hidden bg-zinc-950 px-6 py-10 lg:px-10">
@@ -1394,6 +1422,23 @@ export function PayClient({
                   </svg>
                   Baixar imagem
                 </a>
+                <button
+                  onClick={() => handleShareImage(imageId ? `/api/images/${imageId}/download` : imageUrl!)}
+                  disabled={shareLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-800 px-6 py-3 text-sm font-medium text-zinc-300 transition-all hover:bg-zinc-700 active:scale-[0.98] disabled:opacity-60"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                  {shareLoading ? "Preparando..." : "Salvar / Compartilhar"}
+                </button>
+                {shareError && (
+                  <p className="text-center text-xs text-red-400">{shareError}</p>
+                )}
               </div>
             ) : (
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center text-sm text-zinc-400">

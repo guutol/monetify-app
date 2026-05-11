@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getPresignedUrl } from "@/lib/s3";
 import { resolveGenerationLabel } from "@/lib/generation-labels";
 import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
+import { ShareImageButton } from "./ShareImageButton";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("pt-BR", {
@@ -313,27 +314,30 @@ export default async function HistoryPage() {
                         <>
                           {/* Download: only for completed images */}
                           {isCompleted && item.imageId && (
-                            <a
-                              href={`/api/images/${item.imageId}/download`}
-                              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
+                            <>
+                              <a
+                                href={`/api/images/${item.imageId}/download`}
+                                className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-700"
                               >
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                <polyline points="7 10 12 15 17 10" />
-                                <line x1="12" y1="15" x2="12" y2="3" />
-                              </svg>
-                              Baixar imagem
-                            </a>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Baixar imagem
+                              </a>
+                              <ShareImageButton imageId={item.imageId} />
+                            </>
                           )}
 
                           {/* Ver resultado / Tentar novamente */}
