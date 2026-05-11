@@ -1,6 +1,15 @@
 import { signIn } from "@/auth";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string }>;
+}) {
+  const { callbackUrl } = await searchParams;
+  // Only allow relative paths that start with "/" but not "//" (protocol-relative attacks)
+  const redirectTo =
+    callbackUrl && /^\/[^/]/.test(callbackUrl) ? callbackUrl : "/dashboard";
+
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-6 pb-16">
       {/* Ambient glow */}
@@ -49,7 +58,7 @@ export default function LoginPage() {
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/dashboard" });
+            await signIn("google", { redirectTo });
           }}
         >
           <button
