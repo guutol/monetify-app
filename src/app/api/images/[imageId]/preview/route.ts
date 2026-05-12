@@ -39,17 +39,33 @@ export async function GET(
   const isUnpaidTrial =
     image.orderPrev?.isTrial && image.orderPrev.paymentStatus !== "PAID";
 
+  const order = image.orderPrev;
+
   if (isUnpaidTrial) {
     // Fast path: cached watermark already in S3
     if (image.watermarkKey) {
-      const url = await getPresignedUrl(image.watermarkKey);
+      const redirectKey = image.watermarkKey;
+      console.log("[preview] redirecting", {
+        imageId,
+        isTrial: order?.isTrial,
+        paymentStatus: order?.paymentStatus,
+        s3Key: image.s3Key,
+        watermarkKey: image.watermarkKey,
+        redirectKey,
+      });
+      const url = await getPresignedUrl(redirectKey);
       return NextResponse.redirect(url);
     }
 
     // Slow path: generate watermark on demand, cache for subsequent requests
-    console.log(
-      `[images/preview] on-demand watermark imageId=${imageId} userId=${session.user.id} orderId=${image.orderPrev!.id}`
-    );
+    console.log("[preview] on-demand watermark", {
+      imageId,
+      userId: session.user.id,
+      orderId: order?.id,
+      isTrial: order?.isTrial,
+      paymentStatus: order?.paymentStatus,
+      s3Key: image.s3Key,
+    });
 
     const source = await resolveImageSource(image.s3Key, image.imageUrl);
     if (!source) {
@@ -67,8 +83,16 @@ export async function GET(
         where: { id: imageId },
         data: { watermarkKey: wKey },
       });
-      const url = await getPresignedUrl(wKey);
-      console.log(`[images/preview] watermark cached imageId=${imageId} wKey=${wKey}`);
+      const redirectKey = wKey;
+      console.log("[preview] redirecting", {
+        imageId,
+        isTrial: order?.isTrial,
+        paymentStatus: order?.paymentStatus,
+        s3Key: image.s3Key,
+        watermarkKey: wKey,
+        redirectKey,
+      });
+      const url = await getPresignedUrl(redirectKey);
       return NextResponse.redirect(url);
     } catch (err) {
       console.error(`[images/preview] on-demand watermark failed imageId=${imageId}:`, err);
@@ -81,7 +105,16 @@ export async function GET(
     return new NextResponse("Imagem sem arquivo", { status: 404 });
   }
 
-  const url = await getPresignedUrl(image.s3Key);
+  const redirectKey = image.s3Key;
+  console.log("[preview] redirecting", {
+    imageId,
+    isTrial: order?.isTrial,
+    paymentStatus: order?.paymentStatus,
+    s3Key: image.s3Key,
+    watermarkKey: image.watermarkKey,
+    redirectKey,
+  });
+  const url = await getPresignedUrl(redirectKey);
   return NextResponse.redirect(url);
 }
 
