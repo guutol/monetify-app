@@ -78,6 +78,13 @@ export async function GET(
     try {
       const watermarked = await applyWatermark(source);
       const wKey = buildWatermarkKey(image.userId, imageId);
+      console.log("[preview] upload watermark", {
+        imageId,
+        watermarkKey: wKey,
+        s3Key: image.s3Key,
+        inputBufferLength: source.length,
+        watermarkedBufferLength: watermarked.length,
+      });
       await uploadRawToS3(watermarked, wKey, "image/png");
       await prisma.generatedImage.update({
         where: { id: imageId },
