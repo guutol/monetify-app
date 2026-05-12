@@ -122,6 +122,61 @@ function SupportRefundBlock({
   );
 }
 
+// ── Trial preview image card — handles per-image loading / error state ────────
+
+function PreviewImageCard({
+  preview,
+  index,
+  total,
+}: {
+  preview: Preview;
+  index: number;
+  total: number;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/40">
+      <div className="relative aspect-square bg-zinc-900">
+        {/* Skeleton while loading */}
+        {!loaded && !errored && (
+          <div className="absolute inset-0 animate-pulse bg-zinc-800" />
+        )}
+
+        {/* Error state */}
+        {errored ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-zinc-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p className="text-xs">Erro ao carregar prévia</p>
+          </div>
+        ) : (
+          <Image
+            src={preview.imageUrl}
+            alt={`Prévia ${index + 1}`}
+            width={512}
+            height={512}
+            className={`w-full transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+            unoptimized
+            onLoad={() => setLoaded(true)}
+            onError={() => setErrored(true)}
+          />
+        )}
+
+        <div className="absolute left-3 top-3">
+          <span className="rounded-full border border-zinc-700/60 bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-zinc-400 backdrop-blur-sm">
+            {total > 1 ? `Prévia ${index + 1} de ${total}` : "Prévia com marca"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Trial previews UI ─────────────────────────────────────────────────────────
 
 function TrialPayUI({
@@ -223,29 +278,22 @@ function TrialPayUI({
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_360px]">
           {/* Watermarked previews */}
           <div className="space-y-4">
-            <div className={watermarkedPreviews.length > 1 ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "mx-auto max-w-md"}>
-              {watermarkedPreviews.map((preview, idx) => (
-                <div key={preview.imageId} className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/40">
-                  <div className="relative">
-                    <Image
-                      src={preview.imageUrl}
-                      alt={`Prévia ${idx + 1}`}
-                      width={512}
-                      height={512}
-                      className="w-full"
-                      unoptimized
-                    />
-                    <div className="absolute left-3 top-3">
-                      <span className="rounded-full border border-zinc-700/60 bg-zinc-900/80 px-2.5 py-1 text-xs font-medium text-zinc-400 backdrop-blur-sm">
-                        {watermarkedPreviews.length > 1
-                          ? `Prévia ${idx + 1} de ${watermarkedPreviews.length}`
-                          : "Prévia com marca"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {watermarkedPreviews.length === 0 ? (
+              <div className="flex aspect-video items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900">
+                <p className="text-sm text-zinc-500">Prévia não disponível</p>
+              </div>
+            ) : (
+              <div className={watermarkedPreviews.length > 1 ? "grid grid-cols-1 gap-4 sm:grid-cols-2" : "mx-auto max-w-md"}>
+                {watermarkedPreviews.map((preview, idx) => (
+                  <PreviewImageCard
+                    key={preview.imageId}
+                    preview={preview}
+                    index={idx}
+                    total={watermarkedPreviews.length}
+                  />
+                ))}
+              </div>
+            )}
             <p className="text-center text-xs text-zinc-600">
               Após o pagamento, a marca d&apos;água é removida e a imagem fica disponível para download.
             </p>

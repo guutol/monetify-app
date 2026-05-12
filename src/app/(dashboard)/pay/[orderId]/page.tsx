@@ -82,9 +82,15 @@ export default async function PayPage({
     }
   }
 
-  // Resolve preview URLs when COMPLETED but user hasn't chosen yet (new 2-preview flow)
+  // Resolve preview URLs when COMPLETED but user hasn't chosen yet (new 2-preview flow).
+  // Never expose clean presigned URLs to an unpaid trial order.
   let initialPreviews: { imageId: string; imageUrl: string }[] = [];
-  if (order.generationStatus === "COMPLETED" && !order.imageId && order.images.length > 0) {
+  if (
+    order.generationStatus === "COMPLETED" &&
+    !order.imageId &&
+    order.images.length > 0 &&
+    (!order.isTrial || order.paymentStatus === "PAID")
+  ) {
     initialPreviews = await Promise.all(
       order.images.map(async (preview) => {
         let url = preview.imageUrl;
@@ -96,20 +102,28 @@ export default async function PayPage({
     );
   }
 
-  // Watermarked previews for trial orders (shown before payment)
+  // Watermarked previews for trial orders (shown before payment).
+  // The client uses /api/images/{id}/preview — that route handles auth, watermarking
+  // and caches the result. Never expose s3Key or imageUrl directly here.
   let initialWatermarkedPreviews: { imageId: string; imageUrl: string }[] = [];
   if (order.isTrial && order.paymentStatus !== "PAID" && order.images.length > 0) {
-    initialWatermarkedPreviews = await Promise.all(
-      order.images.map(async (preview) => {
-        let url = preview.imageUrl;
-        if (preview.watermarkKey) {
-          url = await getPresignedUrl(preview.watermarkKey).catch(() => preview.imageUrl);
-        } else if (preview.s3Key) {
-          url = await getPresignedUrl(preview.s3Key).catch(() => preview.imageUrl);
-        }
-        return { imageId: preview.id, imageUrl: url };
-      })
+    initialWatermarkedPreviews = order.images.map((preview) => ({
+      imageId: preview.id,
+      imageUrl: `/api/images/${preview.id}/preview`,
+    }));
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log(
+      `[pay] orderId=${order.id} isTrial=${order.isTrial} paymentStatus=${order.paymentStatus}` +
+      ` generationStatus=${order.generationStatus} imageId=${order.imageId ?? "none"}` +
+      ` previewCount=${order.images.length} watermarkedPreviews=${initialWatermarkedPreviews.length}`
     );
+    for (const p of order.images) {
+      console.log(
+        `[pay] preview imageId=${p.id} watermarkKey=${p.watermarkKey ?? "MISSING"} s3Key=${p.s3Key ?? "MISSING"}`
+      );
+    }
   }
 
   const generationLabel = resolveGenerationLabel(order.prompt);

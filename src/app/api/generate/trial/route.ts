@@ -90,42 +90,46 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Generate images ────────────────────────────────────────────────────────
-  let previews: { imageId: string; watermarkUrl: string }[];
+  // watermarkUrl is null when watermarking could not be applied — client must not show clean image.
+  let previews: { imageId: string; watermarkUrl: string | null }[];
 
   try {
     const result = await generateProductImage(prompt, userId, order.id, uploadKey ?? undefined, getGenerationQualities("trial"), "trial");
 
     // Apply watermarks to each preview
     previews = await Promise.all(
-      result.previews.map(async ({ imageId, presignedUrl }) => {
-        let watermarkUrl = presignedUrl;
-
-        if (!isMock) {
-          // Download original, apply watermark, upload watermarked version
-          try {
-            const { s3Key } = await prisma.generatedImage.findUniqueOrThrow({
-              where: { id: imageId },
-              select: { s3Key: true },
-            });
-
-            if (s3Key) {
-              const original = await downloadFromS3(s3Key);
-              const watermarked = await applyWatermark(original);
-              const wKey = buildWatermarkKey(userId, imageId);
-              await uploadRawToS3(watermarked, wKey, "image/png");
-              await prisma.generatedImage.update({
-                where: { id: imageId },
-                data: { watermarkKey: wKey },
-              });
-              watermarkUrl = await getPresignedUrl(wKey);
-            }
-          } catch (wmErr) {
-            if (isDev) console.error("[trial] watermark failed for", imageId, wmErr);
-            // Non-fatal: fall back to original presigned URL
-          }
+      result.previews.map(async ({ imageId }) => {
+        if (isMock) {
+          // Mock mode: no S3 — return null so the client handles the missing watermark gracefully.
+          return { imageId, watermarkUrl: null };
         }
 
-        return { imageId, watermarkUrl };
+        try {
+          const { s3Key } = await prisma.generatedImage.findUniqueOrThrow({
+            where: { id: imageId },
+            select: { s3Key: true },
+          });
+
+          if (!s3Key) {
+            console.error(`[trial] watermark skipped — no s3Key for imageId=${imageId}`);
+            return { imageId, watermarkUrl: null };
+          }
+
+          const original = await downloadFromS3(s3Key);
+          const watermarked = await applyWatermark(original);
+          const wKey = buildWatermarkKey(userId, imageId);
+          await uploadRawToS3(watermarked, wKey, "image/png");
+          await prisma.generatedImage.update({
+            where: { id: imageId },
+            data: { watermarkKey: wKey },
+          });
+          const watermarkUrl = await getPresignedUrl(wKey);
+          return { imageId, watermarkUrl };
+        } catch (wmErr) {
+          console.error(`[trial] watermark failed for imageId=${imageId}:`, wmErr);
+          // Fatal for security: never return clean URL — client shows error state.
+          return { imageId, watermarkUrl: null };
+        }
       })
     );
   } catch (err) {

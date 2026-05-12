@@ -30,6 +30,9 @@ export async function GET(
 
   // Block download of unpaid trial previews
   if (image.orderPrev?.isTrial && image.orderPrev.paymentStatus !== "PAID") {
+    console.warn(
+      `[images/download] blocked trial download imageId=${imageId} userId=${session.user.id} orderId=${image.orderPrev.id}`
+    );
     return NextResponse.redirect(new URL(`/pay/${image.orderPrev.id}`, req.url), 302);
   }
 
