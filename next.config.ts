@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Ensure font used by watermark.ts is included in the serverless bundle
+  outputFileTracingIncludes: {
+    "/api/images/[imageId]/preview": ["./src/assets/fonts/*.ttf"],
+  },
   images: {
     dangerouslyAllowSVG: false,
     remotePatterns: [
