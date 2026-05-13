@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { fbqEvent, fbqCustom } from "@/lib/meta-pixel";
 
 // ── Generation types ──────────────────────────────────────────────────────────
 
@@ -159,6 +160,10 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   const [fileError, setFileError] = useState<string | null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
 
+  useEffect(() => {
+    fbqEvent("ViewContent");
+  }, []);
+
   // Revoke object URL on cleanup
   useEffect(() => {
     const url = selectedImagePreview;
@@ -275,6 +280,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
         return;
       }
 
+      fbqEvent("InitiateCheckout", { currency: "BRL", value: 9.9 });
       router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
@@ -353,6 +359,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
         return;
       }
 
+      fbqCustom("PreviewGenerated", { content_name: "Free preview", currency: "BRL", value: 0 });
       router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");

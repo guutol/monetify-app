@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
+import { fbqEvent } from "@/lib/meta-pixel";
 
 interface Preview {
   imageId: string;
@@ -210,6 +211,7 @@ function TrialPayUI({
         setUnlockError(data.error ?? "Erro ao criar cobrança. Tente novamente.");
         return;
       }
+      fbqEvent("InitiateCheckout", { currency: "BRL", value: 9.9 });
       onUnlocked(data.brCode ?? "", data.brCodeBase64 ?? "", data.expiresAt ?? null);
     } catch {
       setUnlockError("Erro de conexão. Tente novamente.");
@@ -439,6 +441,23 @@ function PackagePayUI({
         if (data.paymentStatus === "PAID") {
           clearInterval(pollRef.current!);
           pollRef.current = null;
+
+          const purchaseKey = `monetify_px_purchase_${orderId}`;
+          let alreadyTracked = false;
+          try {
+            alreadyTracked = !!localStorage.getItem(purchaseKey);
+            if (!alreadyTracked) localStorage.setItem(purchaseKey, "1");
+          } catch {
+            // localStorage unavailable (private mode / storage blocked)
+          }
+          if (!alreadyTracked) {
+            fbqEvent("Purchase", {
+              currency: "BRL",
+              value: amount / 100,
+              content_name: planLabel || "Pacote de imagens",
+            });
+          }
+
           setIsPaid(true);
           // Refresh server component to get fresh packageActivated value
           router.refresh();
@@ -451,7 +470,7 @@ function PackagePayUI({
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [isPaid, orderId, router]);
+  }, [isPaid, orderId, amount, planLabel, router]);
 
   // Poll for activation after payment (in case webhook takes a moment)
   useEffect(() => {
@@ -867,6 +886,23 @@ export function PayClient({
 
         if (data.paymentStatus === "PAID") {
           stopPolling();
+
+          const purchaseKey = `monetify_px_purchase_${orderId}`;
+          let alreadyTracked = false;
+          try {
+            alreadyTracked = !!localStorage.getItem(purchaseKey);
+            if (!alreadyTracked) localStorage.setItem(purchaseKey, "1");
+          } catch {
+            // localStorage unavailable (private mode / storage blocked)
+          }
+          if (!alreadyTracked) {
+            fbqEvent("Purchase", {
+              currency: "BRL",
+              value: amount / 100,
+              content_name: isTrial ? "Trial unlock" : "Avulso",
+            });
+          }
+
           if (data.generationStatus === "COMPLETED") {
             // Trial: previews already generated, go straight to choosing
             // Standard old flow: generation was triggered externally, show done

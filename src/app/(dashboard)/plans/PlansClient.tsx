@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PRICING_PLANS, type PricingPlan } from "@/config/pricing";
+import { fbqEvent } from "@/lib/meta-pixel";
 
 function formatBRL(cents: number) {
   return (cents / 100).toLocaleString("pt-BR", {
@@ -49,6 +50,8 @@ export function PlansClient({ initialCredits }: Props) {
         return;
       }
 
+      const plan = PRICING_PLANS.find((p) => p.planId === planId);
+      fbqEvent("InitiateCheckout", { currency: "BRL", value: (plan?.amountCents ?? 0) / 100 });
       router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
