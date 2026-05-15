@@ -898,6 +898,7 @@ export function PayClient({
   const [shareLoading, setShareLoading] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
 
+  const router = useRouter();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -931,8 +932,18 @@ export function PayClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // After router.refresh() the server passes clean image URLs via initialPreviews.
+  // Sync them into local previews state so the choosing/auto-choose flow can proceed.
+  useEffect(() => {
+    if (previews.length === 0 && initialPreviews.length > 0) {
+      setPreviews(initialPreviews);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPreviews.length]);
+
   function handleTrialUnlocked(brCode: string, brCodeBase64: string, expiresAt: string | null) {
     if (brCode === "__PAID__") {
+      router.refresh();
       setPhase("choosing");
       return;
     }
@@ -976,9 +987,13 @@ export function PayClient({
           }
 
           if (data.generationStatus === "COMPLETED") {
-            // Trial: previews already generated, go straight to choosing
-            // Standard old flow: generation was triggered externally, show done
-            setPhase(isTrial ? "choosing" : "done");
+            if (isTrial) {
+              // Trigger server re-render to get clean presigned URLs (blocked while pending)
+              router.refresh();
+              setPhase("choosing");
+            } else {
+              setPhase("done");
+            }
           } else {
             setPhase("paid_ready");
           }
@@ -995,13 +1010,20 @@ export function PayClient({
     }, 3000);
 
     return stopPolling;
-  }, [phase, orderId, stopPolling, isTrial]);
+  }, [phase, orderId, stopPolling, isTrial, router]);
 
   // Auto-choose when there's only 1 image — no selection screen needed
   useEffect(() => {
     if (phase !== "choosing" || previews.length !== 1 || isChoosing) return;
     handleChoose(previews[0].imageId, previews[0].imageUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, previews.length]);
+
+  // Safety: if previews never arrive after entering choosing phase, fall back gracefully
+  useEffect(() => {
+    if (phase !== "choosing" || previews.length > 0) return;
+    const t = setTimeout(() => setPhase("done"), 20000);
+    return () => clearTimeout(t);
   }, [phase, previews.length]);
 
   // Schedule local expiry transition when QR has a future expiry
