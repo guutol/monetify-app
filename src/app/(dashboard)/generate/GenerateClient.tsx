@@ -138,6 +138,10 @@ interface Props {
   isLoggedIn: boolean;
 }
 
+// sessionStorage key used to preserve the upload state across the login redirect
+const PENDING_KEY = "monetify_pending_generation";
+const PENDING_TTL_MS = 60 * 60 * 1000; // 1 hour — matches presigned URL TTL
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Props) {
@@ -160,11 +164,15 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   const [fileError, setFileError] = useState<string | null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
 
+  // Restored from sessionStorage after login redirect
+  const [restoredTempKey, setRestoredTempKey] = useState<string | null>(null);
+  const [restoredFileName, setRestoredFileName] = useState<string | null>(null);
+
   useEffect(() => {
     fbqEvent("ViewContent");
   }, []);
 
-  // Revoke object URL on cleanup
+  // Revoke object URL on cleanup (no-op for presigned https URLs)
   useEffect(() => {
     const url = selectedImagePreview;
     return () => {
@@ -172,12 +180,48 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
     };
   }, [selectedImagePreview]);
 
+  // On mount: restore style + image state saved before the login redirect
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      if (!raw) return;
+      const pending = JSON.parse(raw) as {
+        tempKey?: string;
+        previewUrl?: string | null;
+        fileName?: string;
+        selectedStyle?: StyleId;
+        backgroundColorMode?: "auto" | "specific" | null;
+        backgroundColor?: ColorId | null;
+        savedAt?: number;
+      };
+      if (pending.selectedStyle) setSelectedStyle(pending.selectedStyle);
+      if (pending.backgroundColorMode !== undefined) setBackgroundColorMode(pending.backgroundColorMode ?? null);
+      if (pending.backgroundColor !== undefined) setBackgroundColor(pending.backgroundColor ?? null);
+      const expired = pending.savedAt ? Date.now() - pending.savedAt > PENDING_TTL_MS : true;
+      if (pending.tempKey && !expired) {
+        setRestoredTempKey(pending.tempKey);
+        setRestoredFileName(pending.fileName ?? null);
+        if (pending.previewUrl) setSelectedImagePreview(pending.previewUrl);
+      }
+    } catch {
+      // sessionStorage unavailable or corrupted — ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── File handlers ─────────────────────────────────────────────────────────
 
   const ACCEPTED = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+  function clearPendingState() {
+    try { sessionStorage.removeItem(PENDING_KEY); } catch {}
+    setRestoredTempKey(null);
+    setRestoredFileName(null);
+  }
+
   function applyFile(file: File) {
+    clearPendingState();
     setFileError(null);
     if (!ACCEPTED.includes(file.type)) {
       setFileError("Formato não suportado. Use PNG, JPG, JPEG ou WEBP.");
@@ -221,7 +265,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   // ── Validation ────────────────────────────────────────────────────────────
 
   function getValidationError(): string | null {
-    if (!selectedFile) return "Selecione uma imagem do produto para continuar.";
+    if (!selectedFile && !restoredTempKey) return "Selecione uma imagem do produto para continuar.";
     if (!selectedStyle) return "Escolha um tipo de geração para continuar.";
     if (selectedStyle === "colored-bg") {
       if (!backgroundColorMode) return "Escolha como você quer a cor do fundo.";
@@ -234,6 +278,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   // ── Upload helper ─────────────────────────────────────────────────────────
 
   async function uploadImage(): Promise<string | null> {
+    if (restoredTempKey) return restoredTempKey; // already uploaded before login redirect
     if (!selectedFile) return null;
     setLoadingStep("uploading");
 
@@ -254,7 +299,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   // ── Checkout (fluxo avulso: PIX) ─────────────────────────────────────────
 
   async function handleCheckout() {
-    if (!isLoggedIn) { requireLogin(); return; }
+    if (!isLoggedIn) { await requireLogin(); return; }
     setValidationAttempted(true);
     const validationError = getValidationError();
     if (validationError || loadingStep !== null) return;
@@ -263,7 +308,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
 
     try {
       const uploadKey = await uploadImage();
-      if (selectedFile && uploadKey === null) return; // upload failed, error already set
+      if (!uploadKey) return; // upload failed, error already set
 
       setLoadingStep("checkout");
 
@@ -281,6 +326,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
       }
 
       fbqEvent("InitiateCheckout", { currency: "BRL", value: 9.9 });
+      clearPendingState();
       router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
@@ -292,7 +338,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   // ── With-credit (usa 1 produto disponível, gera direto) ──────────────────
 
   async function handleWithCredit() {
-    if (!isLoggedIn) { requireLogin(); return; }
+    if (!isLoggedIn) { await requireLogin(); return; }
     setValidationAttempted(true);
     const validationError = getValidationError();
     if (validationError || loadingStep !== null) return;
@@ -301,7 +347,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
 
     try {
       const uploadKey = await uploadImage();
-      if (selectedFile && uploadKey === null) return;
+      if (!uploadKey) return;
 
       setLoadingStep("generating");
 
@@ -322,6 +368,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
         return;
       }
 
+      clearPendingState();
       router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
@@ -333,7 +380,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   // ── Trial (gera grátis com marca d'água) ─────────────────────────────────
 
   async function handleTrial() {
-    if (!isLoggedIn) { requireLogin(); return; }
+    if (!isLoggedIn) { await requireLogin(); return; }
     setValidationAttempted(true);
     const validationError = getValidationError();
     if (validationError || loadingStep !== null) return;
@@ -342,7 +389,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
 
     try {
       const uploadKey = await uploadImage();
-      if (selectedFile && uploadKey === null) return;
+      if (!uploadKey) return;
 
       setLoadingStep("generating");
 
@@ -360,6 +407,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
       }
 
       fbqCustom("PreviewGenerated", { content_name: "Free preview", currency: "BRL", value: 0 });
+      clearPendingState();
       router.push(`/pay/${data.orderId}`);
     } catch {
       setError("Erro de conexão. Tente novamente.");
@@ -378,7 +426,39 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
   const canUseTrial = isLoggedIn && !freeTrialUsed;
   const canShowTrialCTA = !isLoggedIn || !freeTrialUsed;
 
-  function requireLogin() {
+  async function requireLogin() {
+    const pending: Record<string, unknown> = {
+      selectedStyle,
+      backgroundColorMode,
+      backgroundColor,
+      savedAt: Date.now(),
+    };
+
+    if (selectedFile) {
+      try {
+        setLoadingStep("uploading");
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const res = await fetch("/api/upload/temp", { method: "POST", body: formData });
+        if (res.ok) {
+          const data = await res.json();
+          pending.tempKey = data.tempKey as string;
+          pending.previewUrl = (data.previewUrl as string | null) ?? null;
+          pending.fileName = selectedFile.name;
+        }
+      } catch {
+        // temp upload failed — redirect anyway; user will need to re-upload
+      } finally {
+        setLoadingStep(null);
+      }
+    }
+
+    try {
+      sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+    } catch {
+      // sessionStorage unavailable — continue without saving
+    }
+
     router.push("/login?callbackUrl=" + encodeURIComponent("/generate"));
   }
 
@@ -443,9 +523,25 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
                     className="max-h-48 max-w-full rounded-xl object-contain shadow-md"
                   />
                   <p className="text-xs text-zinc-400">
-                    <span className="font-medium text-zinc-300">{selectedFile?.name}</span>
+                    <span className="font-medium text-zinc-300">
+                      {selectedFile?.name ?? restoredFileName ?? "Imagem restaurada"}
+                    </span>
                     {" "}<span className="text-zinc-500">— clique para trocar</span>
                   </p>
+                </div>
+              ) : restoredTempKey ? (
+                <div className="flex flex-col items-center gap-3 p-6 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
+                      <path d="M20 6 9 17l-5-5" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-300">
+                      {restoredFileName ?? "Imagem restaurada"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-zinc-500">Clique para trocar</p>
+                  </div>
                 </div>
               ) : (
                 <>

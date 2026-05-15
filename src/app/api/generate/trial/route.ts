@@ -21,7 +21,9 @@ const schema = z.object({
 function isValidUploadKey(key: string, userId: string): boolean {
   return (
     key.startsWith(`uploads/${userId}/`) ||
-    key.startsWith(`mock/uploads/${userId}/`)
+    key.startsWith(`mock/uploads/${userId}/`) ||
+    key.startsWith("temp-uploads/") ||
+    key.startsWith("mock/temp-uploads/")
   );
 }
 
