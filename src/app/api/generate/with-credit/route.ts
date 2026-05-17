@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+
+export const maxDuration = 60;
 import { getStylePrompt, getPresetName } from "@/lib/prompts";
 import { generateProductImage } from "@/services/image.service";
 import { getGenerationQualities } from "@/config/image-generation";

@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { generateProductImage } from "@/services/image.service";
 import { getGenerationQualities } from "@/config/image-generation";
 
+export const maxDuration = 60;
+
 const isDev = process.env.NODE_ENV !== "production";
 
 export async function POST(req: NextRequest) {
@@ -24,16 +26,32 @@ export async function POST(req: NextRequest) {
     select: {
       id: true,
       userId: true,
+      orderType: true,
+      isTrial: true,
       paymentStatus: true,
       generationStatus: true,
       prompt: true,
       originalImageKey: true,
+      images: { select: { id: true } },
     },
   });
 
   if (!order || order.userId !== session.user.id) {
+    console.error(`[generate] order not found or forbidden orderId=${orderId} userId=${session.user.id}`);
     return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
   }
+
+  console.log("[generate] request", {
+    orderId,
+    userId: session.user.id,
+    orderType: order.orderType,
+    isTrial: order.isTrial,
+    paymentStatus: order.paymentStatus,
+    generationStatus: order.generationStatus,
+    originalImageKey: order.originalImageKey ? "present" : "missing",
+    promptLength: order.prompt?.length ?? 0,
+    existingImages: order.images.length,
+  });
 
   if (order.paymentStatus !== "PAID") {
     return NextResponse.json({ error: "Pagamento não confirmado" }, { status: 402 });
@@ -53,6 +71,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!order.prompt) {
+    console.error(`[generate] prompt missing orderId=${orderId}`);
     return NextResponse.json({ error: "Prompt não encontrado no pedido" }, { status: 400 });
   }
 
@@ -66,6 +85,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Geração já em andamento ou concluída" }, { status: 409 });
   }
 
+  console.log("[generate] starting OpenAI generation", {
+    orderId,
+    model: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5",
+    originalImageKey: order.originalImageKey ? "present" : "missing",
+  });
+
   try {
     const { previews } = await generateProductImage(
       order.prompt,
@@ -76,13 +101,15 @@ export async function POST(req: NextRequest) {
       "single",
     );
 
+    console.log(`[generate] done orderId=${orderId} previews=${previews.length}`);
+
     // Rename presignedUrl → imageUrl to match the Preview interface in PayClient
     return NextResponse.json({
       previews: previews.map((p) => ({ imageUrl: p.presignedUrl, imageId: p.imageId })),
     });
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
-    console.error(`[generate] generation failed for orderId=${orderId}: ${errMsg}`);
+    console.error(`[generate] generation failed orderId=${orderId}: ${errMsg}`);
 
     await prisma.order.update({
       where: { id: orderId },

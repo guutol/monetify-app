@@ -23,21 +23,38 @@ export async function POST(
     where: { id: orderId },
     select: {
       userId: true,
+      orderType: true,
+      isTrial: true,
+      paymentStatus: true,
       generationStatus: true,
       images: { select: { id: true } },
     },
   });
 
   if (!order || order.userId !== session.user.id) {
+    console.error(`[choose] order not found or forbidden orderId=${orderId} userId=${session.user.id}`);
     return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
   }
 
+  console.log("[choose] request", {
+    orderId,
+    userId: session.user.id,
+    imageId,
+    orderType: order.orderType,
+    isTrial: order.isTrial,
+    paymentStatus: order.paymentStatus,
+    generationStatus: order.generationStatus,
+    availableImageIds: order.images.map((i) => i.id),
+  });
+
   if (order.generationStatus !== "COMPLETED") {
+    console.error(`[choose] generationStatus not COMPLETED orderId=${orderId} status=${order.generationStatus}`);
     return NextResponse.json({ error: "Geração não concluída" }, { status: 409 });
   }
 
   const previewIds = order.images.map((i) => i.id);
   if (!previewIds.includes(imageId)) {
+    console.error(`[choose] imageId not found in order orderId=${orderId} imageId=${imageId} available=${previewIds.join(",")}`);
     return NextResponse.json({ error: "Imagem não pertence a este pedido" }, { status: 400 });
   }
 
@@ -56,5 +73,6 @@ export async function POST(
     }),
   ]);
 
+  console.log(`[choose] done orderId=${orderId} chosenImageId=${imageId}`);
   return NextResponse.json({ ok: true });
 }
