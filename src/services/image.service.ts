@@ -1,4 +1,5 @@
 import { toFile } from "openai";
+import sharp from "sharp";
 import { openai } from "@/lib/openai";
 import { buildGenerationKey, uploadToS3, getPresignedUrl, downloadFromS3 } from "@/lib/s3";
 import { prisma } from "@/lib/prisma";
@@ -32,17 +33,71 @@ export function isMockImageEnabled(): boolean {
   return isDev && enabled;
 }
 
-// Returns null when the key is a mock key or S3 credentials are absent (dev fallback)
-async function fetchOriginalImage(key: string): Promise<Buffer | null> {
+// Downloads the original image from S3, normalizes it to PNG via sharp, and returns
+// the normalized buffer. Returns null for mock keys or missing S3 credentials (dev
+// fallback — generation proceeds without a reference image). Throws with a user-facing
+// message if the file is present but cannot be processed as a valid image.
+async function fetchAndNormalizeImage(key: string): Promise<Buffer | null> {
   if (key.startsWith("mock/")) return null;
   if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_S3_BUCKET_NAME) return null;
 
+  // ── Download raw bytes from S3 ────────────────────────────────────────────
+  let rawBuffer: Buffer;
   try {
-    return await downloadFromS3(key);
+    rawBuffer = await downloadFromS3(key);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[generate] failed to fetch original image from S3:", msg);
+    console.error("[generate] S3 download failed:", { key, error: msg });
+    // Transient S3 error — fall back to text-only generation rather than blocking.
     return null;
+  }
+
+  console.log("[generate] S3 download ok", { key, sizeBytes: rawBuffer.length });
+
+  // Detect XML/HTML error response disguised as an image (S3 returns 200 with an
+  // error body in some misconfigured scenarios — the body starts with '<').
+  if (rawBuffer.length < 100 || rawBuffer[0] === 0x3c) {
+    console.error("[generate] S3 returned non-image content (XML/HTML?)", {
+      key,
+      sizeBytes: rawBuffer.length,
+      preview: rawBuffer.slice(0, 120).toString("utf8"),
+    });
+    return null;
+  }
+
+  // ── Normalize with sharp ──────────────────────────────────────────────────
+  // Needed because OpenAI images.edit only accepts valid PNG/JPEG and rejects
+  // WEBP, HEIC, AVIF, images with alpha channels, or files with wrong EXIF.
+  try {
+    const meta = await sharp(rawBuffer).metadata();
+
+    console.log("[generate] original image metadata", {
+      key,
+      format: meta.format,
+      width: meta.width,
+      height: meta.height,
+      channels: meta.channels,
+      hasAlpha: meta.hasAlpha,
+      sizeBytes: rawBuffer.length,
+    });
+
+    const normalized = await sharp(rawBuffer)
+      .rotate()                              // correct EXIF orientation
+      .flatten({ background: "#ffffff" })   // remove alpha, composite on white
+      .png()
+      .toBuffer();
+
+    console.log("[generate] image normalized for OpenAI", {
+      originalBytes: rawBuffer.length,
+      normalizedBytes: normalized.length,
+      outputFormat: "png",
+    });
+
+    return normalized;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[generate] sharp normalization failed:", { key, error: msg });
+    throw new Error("Imagem original inválida ou incompatível. Envie uma imagem PNG ou JPG.");
   }
 }
 
@@ -130,10 +185,13 @@ export async function generateProductImage(
     };
   }
 
-  // ── Attempt to fetch the original product image ────────────────────────────
+  // ── Fetch and normalize the original product image ───────────────────────
+  // fetchAndNormalizeImage returns null when there is no image (mock/no-S3) and
+  // throws when the image exists but cannot be parsed — in that case the error
+  // propagates up and the caller returns HTTP 500 with a user-facing message.
 
   const originalBuffer = originalImageKey
-    ? await fetchOriginalImage(originalImageKey)
+    ? await fetchAndNormalizeImage(originalImageKey)
     : null;
 
   const useImageEdit = originalBuffer !== null;
@@ -167,7 +225,8 @@ export async function generateProductImage(
       if (useImageEdit) {
         // Recreate File object each iteration — the underlying buffer is not consumed
         // but the File wrapper may be a one-use readable in some SDK versions.
-        const imageFile = await toFile(originalBuffer!, "product.png", { type: "image/png" });
+        // Buffer is always PNG at this point (normalized by fetchAndNormalizeImage).
+        const imageFile = await toFile(originalBuffer!, "original.png", { type: "image/png" });
 
         const response = await openai.images.edit({
           model: IMAGE_MODEL,
