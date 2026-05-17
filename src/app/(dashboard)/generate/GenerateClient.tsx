@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fbqEvent, fbqCustom } from "@/lib/meta-pixel";
+import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
 
 // ── Generation types ──────────────────────────────────────────────────────────
 
@@ -325,7 +326,7 @@ export function GenerateClient({ initialCredits, freeTrialUsed, isLoggedIn }: Pr
         return;
       }
 
-      fbqEvent("InitiateCheckout", { currency: "BRL", value: 9.9 });
+      fbqEvent("InitiateCheckout", { currency: "BRL", value: PRICE_PER_GENERATION_CENTS / 100 });
       clearPendingState();
       router.push(`/pay/${data.orderId}`);
     } catch {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
 import { fbqEvent } from "@/lib/meta-pixel";
+import { PRICE_PER_GENERATION_CENTS } from "@/config/pricing";
 
 interface Preview {
   imageId: string;
@@ -211,7 +212,7 @@ function TrialPayUI({
         setUnlockError(data.error ?? "Erro ao criar cobrança. Tente novamente.");
         return;
       }
-      fbqEvent("InitiateCheckout", { currency: "BRL", value: 9.9 });
+      fbqEvent("InitiateCheckout", { currency: "BRL", value: PRICE_PER_GENERATION_CENTS / 100 });
       onUnlocked(data.brCode ?? "", data.brCodeBase64 ?? "", data.expiresAt ?? null);
     } catch {
       setUnlockError("Erro de conexão. Tente novamente.");
@@ -439,15 +440,12 @@ function PackagePayUI({
     } catch {
       // localStorage unavailable (private mode / storage blocked)
     }
-    if (!alreadyTracked) {
+    if (!alreadyTracked && process.env.NODE_ENV === "production") {
       fbqEvent("Purchase", {
         currency: "BRL",
         value: amount / 100,
         content_name: planLabel || "Pacote de imagens",
       });
-      if (process.env.NODE_ENV === "development") {
-        console.log("[Meta Pixel] Purchase (on-load, já pago):", { orderId, value: amount / 100 });
-      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -474,15 +472,12 @@ function PackagePayUI({
           } catch {
             // localStorage unavailable (private mode / storage blocked)
           }
-          if (!alreadyTracked) {
+          if (!alreadyTracked && process.env.NODE_ENV === "production") {
             fbqEvent("Purchase", {
               currency: "BRL",
               value: amount / 100,
               content_name: planLabel || "Pacote de imagens",
             });
-            if (process.env.NODE_ENV === "development") {
-              console.log("[Meta Pixel] Purchase (polling):", { orderId, value: amount / 100 });
-            }
           }
 
           setIsPaid(true);
@@ -546,16 +541,6 @@ function PackagePayUI({
         if (!alreadyTracked) localStorage.setItem(purchaseKey, "1");
       } catch {
         // localStorage unavailable
-      }
-      if (!alreadyTracked) {
-        fbqEvent("Purchase", {
-          currency: "BRL",
-          value: amount / 100,
-          content_name: planLabel || "Pacote de imagens",
-        });
-        if (process.env.NODE_ENV === "development") {
-          console.log("[Meta Pixel] Purchase (simulação dev):", { orderId, value: amount / 100 });
-        }
       }
       setIsPaid(true);
       router.refresh();
@@ -919,15 +904,12 @@ export function PayClient({
     } catch {
       // localStorage unavailable (private mode / storage blocked)
     }
-    if (!alreadyTracked) {
+    if (!alreadyTracked && process.env.NODE_ENV === "production") {
       fbqEvent("Purchase", {
         currency: "BRL",
         value: amount / 100,
         content_name: isTrial ? "Trial unlock" : "Avulso",
       });
-      if (process.env.NODE_ENV === "development") {
-        console.log("[Meta Pixel] Purchase (on-load, já pago):", { orderId, value: amount / 100 });
-      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -975,15 +957,12 @@ export function PayClient({
           } catch {
             // localStorage unavailable (private mode / storage blocked)
           }
-          if (!alreadyTracked) {
+          if (!alreadyTracked && process.env.NODE_ENV === "production") {
             fbqEvent("Purchase", {
               currency: "BRL",
               value: amount / 100,
               content_name: isTrial ? "Trial unlock" : "Avulso",
             });
-            if (process.env.NODE_ENV === "development") {
-              console.log("[Meta Pixel] Purchase (polling):", { orderId, value: amount / 100 });
-            }
           }
 
           if (data.generationStatus === "COMPLETED") {
@@ -1120,16 +1099,6 @@ export function PayClient({
         if (!alreadyTracked) localStorage.setItem(purchaseKey, "1");
       } catch {
         // localStorage unavailable
-      }
-      if (!alreadyTracked) {
-        fbqEvent("Purchase", {
-          currency: "BRL",
-          value: amount / 100,
-          content_name: isTrial ? "Trial unlock" : "Avulso",
-        });
-        if (process.env.NODE_ENV === "development") {
-          console.log("[Meta Pixel] Purchase (simulação dev):", { orderId, value: amount / 100 });
-        }
       }
       setPhase("paid_ready");
     } catch {
