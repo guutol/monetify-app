@@ -5,13 +5,13 @@ import { useState, useEffect, useCallback } from "react";
 
 const EXAMPLES = [
   {
-    before: "/produto-1-antes.png",
-    after: "/produto-1-depois.png",
+    before: "/hero-examples/hero-produto-1-antes.jpg",
+    after: "/hero-examples/hero-produto-1-depois.jpg",
     label: "Produto real",
   },
   {
-    before: "/produto-2-antes.jpg",
-    after: "/produto-2-depois.png",
+    before: "/hero-examples/hero-produto-2-antes.jpg",
+    after: "/hero-examples/hero-produto-2-depois.jpg",
     label: "Produto real",
   },
 ];
