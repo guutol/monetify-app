@@ -339,13 +339,15 @@ function Showcase() {
               </div>
 
               {/* Before / After slider */}
-              <BeforeAfterSlider
-                beforeImageUrl={item.before}
-                afterImageUrl={item.after}
-                beforeLabel="Antes"
-                afterLabel="Depois"
-                className="rounded-none"
-              />
+              <div className="mx-auto w-full max-w-lg">
+                <BeforeAfterSlider
+                  beforeImageUrl={item.before}
+                  afterImageUrl={item.after}
+                  beforeLabel="Antes"
+                  afterLabel="Depois"
+                  className="rounded-none"
+                />
+              </div>
             </div>
           ))}
         </div>
