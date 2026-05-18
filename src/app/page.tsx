@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { UserMenu } from "@/components/UserMenu";
 import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { HeroMockup } from "@/components/HeroMockup";
 
 function Logo({ className = "" }: { className?: string }) {
   return (
@@ -63,88 +64,6 @@ async function Navbar() {
         </div>
       </div>
     </header>
-  );
-}
-
-// ─── HeroMockup ───────────────────────────────────────────────────────────────
-
-function HeroMockup() {
-  return (
-    <div className="relative mx-auto w-full max-w-sm">
-      {/* Main card */}
-      <div className="relative rounded-2xl border border-zinc-700/60 bg-zinc-900/80 p-5 shadow-2xl backdrop-blur-sm">
-        {/* Card header */}
-        <div className="mb-5 flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Monetify
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-medium text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Pronto
-          </span>
-        </div>
-
-        {/* Before / After */}
-        <div className="relative grid grid-cols-2 gap-3">
-          {/* Before — foto original: produto pequeno, desfocado, fundo escuro */}
-          <div>
-            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800">
-              <span className="text-2xl opacity-30 blur-[1px]">📦</span>
-              <div className="absolute bottom-2 left-2 rounded bg-black/50 px-1.5 py-0.5 text-[10px] text-zinc-400">
-                Foto original
-              </div>
-            </div>
-          </div>
-
-          {/* After — imagem gerada: produto grande, nítido, sombra, fundo branco */}
-          <div>
-            <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-white shadow-inner">
-              {/* Sombra do produto */}
-              <div className="absolute bottom-4 left-1/2 h-3 w-10 -translate-x-1/2 rounded-full bg-zinc-200 blur-sm" />
-              <span className="relative text-5xl drop-shadow-sm">📦</span>
-              <div className="absolute bottom-2 left-2 rounded bg-black/10 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                Imagem gerada
-              </div>
-            </div>
-          </div>
-
-          {/* Arrow between columns */}
-          <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-full border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs font-bold text-emerald-400 shadow-lg">
-            →
-          </div>
-        </div>
-
-        {/* Status bar */}
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5">
-          <span className="text-sm text-emerald-400">✓</span>
-          <span className="text-xs font-medium text-emerald-300">Pronta para marketplace</span>
-        </div>
-
-        {/* Price row */}
-        <div className="mt-3 flex items-center justify-between border-t border-zinc-800 pt-3">
-          <span className="text-xs text-zinc-500">Custo por imagem</span>
-          <span className="text-sm font-bold text-white">R$ 9,90</span>
-        </div>
-
-      </div>
-
-      {/* Floating platform badges */}
-      <div className="absolute -bottom-4 -left-2 flex gap-1.5">
-        {["Shopee", "Mercado Livre", "TikTok Shop", "Instagram"].map((p) => (
-          <span
-            key={p}
-            className="rounded-full border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-xs font-medium text-zinc-400 shadow-lg"
-          >
-            {p}
-          </span>
-        ))}
-      </div>
-
-      {/* Floating AI badge */}
-      <div className="absolute -right-3 -top-3 rounded-xl bg-emerald-500 px-2.5 py-1 text-xs font-bold text-white shadow-lg shadow-emerald-500/40">
-        IA
-      </div>
-    </div>
   );
 }
 
