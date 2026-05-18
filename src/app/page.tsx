@@ -3,6 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { UserMenu } from "@/components/UserMenu";
 import { buildSupportWhatsAppUrl, SUPPORT_EMAIL } from "@/config/support";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
 function Logo({ className = "" }: { className?: string }) {
   return (
@@ -337,44 +338,14 @@ function Showcase() {
                 <span className="text-xs font-semibold text-zinc-400">Produto real</span>
               </div>
 
-              {/* Before / After */}
-              <div className="grid grid-cols-1 sm:grid-cols-2">
-                {/* Before */}
-                <div>
-                  <div className="relative aspect-square w-full overflow-hidden bg-zinc-800">
-                    <Image
-                      src={item.before}
-                      alt={`Produto ${i + 1} — antes`}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute left-3 top-3">
-                      <span className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-2.5 py-1 text-xs font-semibold text-zinc-400 backdrop-blur-sm">
-                        Antes
-                      </span>
-                    </div>
-                  </div>
-                  <p className="px-4 py-3 text-xs text-zinc-500">Foto original enviada</p>
-                </div>
-
-                {/* After */}
-                <div className="border-t border-zinc-800 sm:border-l sm:border-t-0">
-                  <div className="relative aspect-square w-full overflow-hidden bg-zinc-800">
-                    <Image
-                      src={item.after}
-                      alt={`Produto ${i + 1} — depois`}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute left-3 top-3">
-                      <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-400 backdrop-blur-sm">
-                        Depois
-                      </span>
-                    </div>
-                  </div>
-                  <p className="px-4 py-3 text-xs text-zinc-500">Imagem gerada pelo Monetify</p>
-                </div>
-              </div>
+              {/* Before / After slider */}
+              <BeforeAfterSlider
+                beforeImageUrl={item.before}
+                afterImageUrl={item.after}
+                beforeLabel="Antes"
+                afterLabel="Depois"
+                className="rounded-none"
+              />
             </div>
           ))}
         </div>
