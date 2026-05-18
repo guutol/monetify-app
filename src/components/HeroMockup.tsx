@@ -6,12 +6,12 @@ import { useState, useEffect, useCallback } from "react";
 const EXAMPLES = [
   {
     before: "/hero-examples/hero-produto-1-antes.jpg",
-    after: "/hero-examples/hero-produto-1-depois.jpg",
+    after: "/hero-examples/hero-produto-1-depois.png",
     label: "Produto real",
   },
   {
-    before: "/hero-examples/hero-produto-2-antes.jpg",
-    after: "/hero-examples/hero-produto-2-depois.jpg",
+    before: "/hero-examples/hero-produto-2-antes.png",
+    after: "/hero-examples/hero-produto-2-depois.png",
     label: "Produto real",
   },
 ];
@@ -88,7 +88,7 @@ export function HeroMockup() {
                 src={example.after}
                 alt="Imagem gerada pelo Monetify"
                 fill
-                className="object-contain p-1"
+                className="object-cover"
                 sizes="160px"
                 priority
               />
